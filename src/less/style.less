@@ -1,0 +1,118 @@
+body {
+  padding: 0;
+  margin: 0;
+}
+.ph-calendar_container {
+  ul {
+    padding-left: 0;
+    list-style:none;
+  }
+  p {
+    margin:0;
+  }
+  padding-top: 26px;
+  .ph-calendar_header-fixed {
+    box-shadow: inset 0px 3px 1px -3px rgba(115, 115, 115, 0.75);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    background: #fff;
+    z-index: 1000;
+    .ph-calendar_week-label {
+      height: 25px;
+      box-shadow: 0px -1px 9px -1px rgba(115, 115, 115, 0.75);
+      p {
+        display: inline-block;
+        width: 14.285%;
+        text-align: center;
+        font-size: 13px;
+      }
+    }
+    .ph-calendar_date {
+      padding-top: 10px;
+      padding-bottom: 10px;
+      p {
+        height: 25px;
+        text-align: center;
+      }
+    }
+  }
+  .ph-calendar_content {
+    .ph-calendar_month {
+      overflow: hidden;
+      .ph-calendar_month-title {
+        text-align: center;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        p {
+          height: 25px;
+          color: #111;
+          font-size: 15px;
+        }
+      }
+      .ph-calendar_month-week {
+        border-top: 1px solid #E1E1E1;
+        margin: 0 -1px 0 0;
+        li {
+          float: left;
+          width: 14.285%;
+          height: 60px;
+          text-align: center;
+          border: 1px solid transparent;
+          border-right-color: #E1E1E1;
+          border-bottom-color: #E1E1E1;
+          box-sizing: border-box;
+          font-size: 15px;
+          &.day_status_pre, &.day_status_next {
+            color: #cccccc;
+          }
+          &.day_status_current {
+            color: #000;
+          }
+          //
+          &.choose-end, &.choose-start {
+            background: #FF6633;
+            color: #ffffff;
+          }
+          &.choose-between {
+            background: #FFD3C6;
+            color: #FF6633;
+          }
+
+          //
+          .day {
+            margin-top: 3px;
+          }
+          .week {
+            //display: none;
+          }
+          .event {
+            position: relative;
+            color: #FD0000;
+            margin-top: 3px;
+            text-size-adjust: none;
+            font-size: 8px;
+            &:before {
+              content: ' ';
+              position: absolute;
+              width: 3px;
+              height: 3px;
+              border-radius: 3px;
+              left: 50%;
+              margin-left: -1.5px;
+              margin-top: 3px;
+              top: -6px;
+              background-color: #FD0000;
+            }
+            p {
+              //transform: scale(0.533);
+            }
+          }
+          .choose {
+            font-size: 10px;
+          }
+        }
+      }
+    }
+  }
+}
