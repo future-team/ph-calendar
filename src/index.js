@@ -1,4 +1,6 @@
 import React, {Component, PropTypes} from 'react'
+import TopPanel from './TopPanel'
+
 import './less/style.less'
 
 // element-closest | CC0-1.0 | github.com/jonathantneal/closest
@@ -46,6 +48,7 @@ export default class PhCalendar extends Component {
         }))
     }
     static defaultProps = {
+        monthCount: 5,
         showPreMonthDay: false,
         showNextMonthDay: false,
         weekStart: 1,
@@ -79,9 +82,16 @@ export default class PhCalendar extends Component {
         const date = new Date()
         const year = date.getFullYear()
         const month = date.getMonth()
+
         this.state = {
-            monthRange: [new Date(year, month-1), new Date(year, month), new Date(year, month + 1)], // 始终为三个月的显示，
-            dateRange: []
+            layer: false,
+            date: props.date,
+            monthRange: this.getMonthRange(props.date), // 月份的列表
+            yearRange: [], // 选择年份的列表
+            dateRange: [], // 选择日期的范围
+            changeDate: false,
+            changeDateYear: false,
+            changeDateMonth: false
         }
     }
 
@@ -122,7 +132,7 @@ export default class PhCalendar extends Component {
             swipeClass: 'ph-calendar_touch-move'
         })*/
     }
-    onTouchEndHandler(evt) {
+    changeMonthRangeHandler(evt) {
         evt.stopPropagation()
         // evt.preventDefault()
         const clientWidth = this.screen.width
@@ -140,7 +150,7 @@ export default class PhCalendar extends Component {
                 } else { // up
                     swipeClass = 'ph-calendar_touch-end-up'
                 }
-                this.setMonthRange(this.movey)
+                this.scrollChangeMonth(this.movey)
                 /*setTimeout(()=>{
                     this.setState({
                         swipeClass: ''
@@ -160,24 +170,34 @@ export default class PhCalendar extends Component {
             swipeClass: swipeClass
         })*/
     }
-    setMonthRange(type) {
-        const monthRange = this.state.monthRange
+    scrollChangeMonth(type){
+        let monthRange = this.state.monthRange
+        let date = new Date()
         if(type > 0){// next
-            const last = monthRange[monthRange.length-1]
-            monthRange.push(new Date(last.getFullYear(), last.getMonth()+1))
-            monthRange.splice(0, 1)
-            this.setState({
-                monthRange: monthRange
-            })
+            date = monthRange[3]
         }else {// prev
-            console.log('prev')
-            const first = monthRange[0]
-            monthRange.unshift(new Date(first.getFullYear(), first.getMonth()-1))
-            this.setState({
-                monthRange: monthRange.slice(0, 2)
-            })
+            date = monthRange[1]
         }
+        this.setState({
+            monthRange: this.getMonthRange(date)
+        })
     }
+    setMonthRange(date) {
+        this.setState({
+            monthRange: this.getMonthRange(date)
+        })
+    }
+    // 渲染5个，在前后各加减
+    getMonthRange(date){
+        let month = date.getMonth()
+        const year = date.getFullYear()
+        let arr = []
+        for(let i = -2; i < 3; i++){
+            arr.push(new Date(year, month+i))
+        }
+        return arr
+    }
+
     chooseDate(date, evt) {
         evt.stopPropagation()
         evt.preventDefault()
@@ -240,12 +260,6 @@ export default class PhCalendar extends Component {
         }
         return daysArr
     }
-    renderYearSelect(){
-        console.log('显示年份选择面板')
-    }
-    renderMonthSelect(){
-        console.log('显示月份选择面板')
-    }
     getDayStyle(date){
         const chooseStart = this.state.dateRange[0]
         const chooseEnd = this.state.dateRange[1]
@@ -274,9 +288,21 @@ export default class PhCalendar extends Component {
         }
         return null
     }
+    dateChanged(date){
+        this.setState({
+            monthRange: this.getMonthRange(date),
+            layer: false
+        })
+    }
+    titleClick(){
+        // trigger layer
+        this.setState({
+            layer: true
+        })
+    }
     render(){
-        const currentDate = this.state.monthRange[0]
         const {weekStart, weekLabel} = this.props
+        const currentDate = this.state.monthRange[0]
         return (
             <div className="ph-calendar_container">
                 <div className="ph-calendar_header-fixed">
@@ -288,16 +314,13 @@ export default class PhCalendar extends Component {
                         }
                     </div>
                     <div className="ph-calendar_date">
-                        <p><span onClick={this.renderYearSelect.bind(this)}>{currentDate.getFullYear()}</span><span>年</span><span onClick={this.renderMonthSelect.bind(this)}>{currentDate.getMonth()+1}</span><span>月</span></p>
+                        <TopPanel date={currentDate} dateChanged={::this.dateChanged} titleClick={::this.titleClick}/>
                     </div>
-                    {/*<div className="ph-calendar_date-choose">
-
-                    </div>*/}
                 </div>
                 <div className="ph-calendar_content"
                      onTouchStart={::this.onTouchStartHandler}
                      onTouchMove={::this.onTouchMoveHandler}
-                     onTouchEnd={::this.onTouchEndHandler}
+                     onTouchEnd={::this.changeMonthRangeHandler}
                 >
                     {
                         this.state.monthRange.map((monthItem, monthIndex)=>{
@@ -307,7 +330,7 @@ export default class PhCalendar extends Component {
                                     <div className="ph-calendar_month-title">
                                         <p>{year}年{month+1}月</p>
                                     </div>
-                                    <ul className="ph-calendar_month-week">
+                                    <ul className="ph-calendar_clearfix ph-calendar_month-week">
                                         {
                                             this.renderMonth(year, month).map((dayItem, dayIndex)=>{
                                                 const style = this.getDayStyle(dayItem.date)
@@ -315,7 +338,6 @@ export default class PhCalendar extends Component {
                                                     return (
                                                         <li key={dayIndex} onClick={this.chooseDate.bind(this, dayItem)} className={style.className + ' day_status_'+ dayItem.type }>
                                                             <div className="day">{dayItem.date.getDate()}</div>
-                                                            <div className="week">{dayItem.weekLabel}</div>
                                                             {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
                                                             <div className="choose">{style.type == 0? '': (style.type == -1?'开始':'结束')}</div>
                                                         </li>
@@ -324,7 +346,6 @@ export default class PhCalendar extends Component {
                                                     return (
                                                         <li key={dayIndex} onClick={this.chooseDate.bind(this, dayItem)} className={'day_status_'+ dayItem.type }>
                                                             <div className="day">{dayItem.date.getDate()}</div>
-                                                            <div className="week">{dayItem.weekLabel}</div>
                                                             {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
                                                         </li>
                                                     )
@@ -336,6 +357,7 @@ export default class PhCalendar extends Component {
                         })
                     }
                 </div>
+                {this.state.layer && <div className="ph-calendar_top-panel-layer"></div>}
             </div>
         )
     }

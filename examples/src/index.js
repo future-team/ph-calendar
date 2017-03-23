@@ -14,7 +14,7 @@ class Demo extends Component {
         super(props, context)
         this.state = {
             defaultDate: null,
-            date: null,
+            date: new Date(),
             config: {}
         }
     }
