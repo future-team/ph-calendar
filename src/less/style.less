@@ -2,15 +2,15 @@ body {
   padding: 0;
   margin: 0;
 }
-.ph-calendar_clearfix:before,
-.ph-calendar_clearfix:after {
+.ph-c-clearfix:before,
+.ph-c-clearfix:after {
   display: table;
   content: " ";
 }
-.ph-calendar_clearfix:after {
+.ph-c-clearfix:after {
   clear: both;
 }
-.ph-calendar_container {
+.ph-c-container {
   ul {
     margin: 0;
     padding-left: 0;
@@ -20,7 +20,7 @@ body {
     margin:0;
   }
   padding-top: 26px;
-  .ph-calendar_top-panel-layer {
+  .ph-c-top-panel-layer {
     position: fixed;
     top:0;
     bottom: 0;
@@ -29,14 +29,14 @@ body {
     background: rgba(0,0,0,.4);
     z-index: 0;
   }
-  .ph-calendar_header-fixed {
+  .ph-c-header-fixed {
     box-shadow: inset 0px 3px 1px -3px rgba(115, 115, 115, 0.75);
     position: fixed;
     width: 100%;
     top: 0;
     background: #fff;
     z-index: 1000;
-    .ph-calendar_week-label {
+    .ph-c-week-label {
       height: 25px;
       box-shadow: 0px -1px 9px -1px rgba(115, 115, 115, 0.75);
       p {
@@ -46,7 +46,7 @@ body {
         font-size: 13px;
       }
     }
-    .ph-calendar_date {
+    .ph-c-date {
       padding-top: 10px;
       padding-bottom: 10px;
       p {
@@ -55,13 +55,13 @@ body {
       }
     }
   }
-  .ph-calendar_top-panel {
-    .ph-calendar_top-panel-title {
+  .ph-c-top-panel {
+    .ph-c-top-panel-title {
       font-size: 15px;
     }
-    .ph-calendar_top-panel-container {
+    .ph-c-top-panel-container {
       font-size: 13px;
-      .ph-calendar_top-panel-content {
+      .ph-c-top-panel-content {
         .item {
           float: left;
           width: 25%;
@@ -73,15 +73,12 @@ body {
           }
         }
       }
-
     }
-
-
   }
-  .ph-calendar_content {
-    .ph-calendar_month {
+  .ph-c-content {
+    .ph-c-month {
       overflow: hidden;
-      .ph-calendar_month-title {
+      .ph-c-month-title {
         text-align: center;
         padding-top: 10px;
         padding-bottom: 10px;
@@ -91,7 +88,8 @@ body {
           font-size: 15px;
         }
       }
-      .ph-calendar_month-week {
+      // ul style
+      .ph-c-month-week {
         border-top: 1px solid #E1E1E1;
         margin-right: -1px;
         li {
@@ -114,6 +112,7 @@ body {
           &.choose-end, &.choose-start {
             background: #FF6633;
             color: #ffffff;
+            border-color: #FF6633;
           }
           &.choose-between {
             background: #FFD3C6;
@@ -151,6 +150,96 @@ body {
           }
           .choose {
             font-size: 10px;
+          }
+        }
+      }
+
+      // table style
+      .ph-c-month-week-container {
+
+      }
+      .ph-c-month-week-table {
+        table-layout: fixed;
+        width: 100%;
+        text-align: center;
+        border-collapse: collapse;
+        tr{
+          th {
+
+          }
+          td {
+            height: 60px;
+            border: 1px solid #E1E1E1;
+            font-size: 15px;
+            vertical-align: top;
+            //
+            .day {
+              margin-top: 10px;
+            }
+            .week {
+              //display: none;
+            }
+            .event {
+              position: relative;
+              color: #FD0000;
+              margin-top: 5px;
+              font-size: 8px;
+              &:before {
+                content: ' ';
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                border-radius: 4px;
+                left: 50%;
+                margin-left: -2px;
+                margin-top: 3px;
+                top: -6px;
+                background-color: #FD0000;
+              }
+              p {
+                //transform: scale(0.533);
+              }
+            }
+            .choose {
+              margin-top: 5px;
+              font-size: 10px;
+            }
+            &:first-child {
+              border-left-color: transparent;
+            }
+            &:last-child {
+              border-right-color: transparent;
+            }
+            &.day_status_pre, &.day_status_next {
+              .day,.week, .event {
+                display: none;
+              }
+            }
+            &.day_status_current {
+              color: #000;
+            }
+            //
+            &.choose-end, &.choose-start {
+              background: #FF6633;
+              color: #ffffff;
+              border-color: #FF6633;
+              .event {
+                color: #ffffff;
+                &:before {
+                  background-color: #ffffff;
+                }
+              }
+            }
+            &.choose-between {
+              background: #FFD3C6;
+              color: #FF6633;
+            }
+            &.day_disabled {
+              color: #cccccc;
+              .day,.week, .event {
+                color: #cccccc;
+              }
+            }
           }
         }
       }

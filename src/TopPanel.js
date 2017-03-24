@@ -47,15 +47,15 @@ export default class TopPanel extends Component {
         evt.stopPropagation()
         const clientWidth = this.screen.width
         const absX = Math.abs(this.movex)
-        let swipeClass = 'ph-calendar_touch-recover'
+        let swipeClass = 'ph-c-touch-recover'
         if(this.longTouch === true) {
             // 长滑动是翻页
             // TODO 这里要做缓存处理
             if (absX > clientWidth / 3) {
                 if(this.movex > 0) {// next
-                    swipeClass = 'ph-calendar_touch-end-left'
+                    swipeClass = 'ph-c-touch-end-left'
                 } else { // prev
-                    swipeClass = 'ph-calendar_touch-end-right'
+                    swipeClass = 'ph-c-touch-end-right'
                 }
                 this.setYearRange(this.movex)
             }
@@ -132,17 +132,17 @@ export default class TopPanel extends Component {
             return ''
         }else if(changeYear){
             // 获取年的范围
-            return (<div className="ph-calendar_top-panel-container"><div
-                className="ph-calendar_top-panel-content"
+            return (<div className="ph-c-top-panel-container"><div
+                className="ph-c-top-panel-content"
                 onTouchStart={::this.onTouchStartHandler}
                 onTouchMove={::this.onTouchMoveHandler}
-                onTouchEnd={::this.changeYearRangeHandler}><ul className="ph-calendar_clearfix">{
+                onTouchEnd={::this.changeYearRangeHandler}><ul className="ph-c-clearfix">{
                 years.map((item, index)=>{
                     return <li key={index} className="item" onClick={this.setItem.bind(this, item, 'year')}><div className={ item == year ? 'active' : ''}>{ item }</div></li>
                 })
             }</ul></div></div>)
         }else if(changeMonth) {
-            return (<div className="ph-calendar_top-panel-container"><div className="ph-calendar_top-panel-content"><ul className="ph-calendar_clearfix">{
+            return (<div className="ph-c-top-panel-container"><div className="ph-c-top-panel-content"><ul className="ph-c-clearfix">{
                 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((item, index)=>{
                     return <li key={index} className="item" onClick={this.setItem.bind(this, item, 'month')}><div className={ item == month ? 'active' : ''}>{ item+1 }月</div></li>
                 })
@@ -175,8 +175,8 @@ export default class TopPanel extends Component {
     }
     render(){
         return (
-            <div className="ph-calendar_top-panel">
-                <div className="ph-calendar_top-panel-title">{
+            <div className="ph-c-top-panel">
+                <div className="ph-c-top-panel-title">{
                     this.renderTitle()
                 }</div>
                 {
