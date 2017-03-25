@@ -47,20 +47,12 @@ export default class TopPanel extends Component {
         evt.stopPropagation()
         const clientWidth = this.screen.width
         const absX = Math.abs(this.movex)
-        let swipeClass = 'ph-c-touch-recover'
         if(this.longTouch === true) {
             // 长滑动是翻页
             // TODO 这里要做缓存处理
             if (absX > clientWidth / 3) {
-                if(this.movex > 0) {// next
-                    swipeClass = 'ph-c-touch-end-left'
-                } else { // prev
-                    swipeClass = 'ph-c-touch-end-right'
-                }
                 this.setYearRange(this.movex)
             }
-        }else {
-            // click
         }
     }
     getYears(year){
