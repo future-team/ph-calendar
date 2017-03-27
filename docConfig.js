@@ -5,7 +5,7 @@ module.exports = {
     paths: ['src/'],
     demoDir:"examples/",
     //文档页面输出路径
-    outdir: 'doc/',
+    outdir: 'docs/',
     //内置主题
     // theme:'ui',
     //自定义主题目录

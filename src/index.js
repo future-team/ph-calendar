@@ -9,7 +9,7 @@ export default class PhCalendar extends Component {
         weekStart: PropTypes.number,
         weekLabel: PropTypes.array,
         dateChanged: PropTypes.func,
-        range: PropTypes.bool,
+        range: PropTypes.bool, // 是否支持范围选择
         disabled: PropTypes.array,// 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
         values: PropTypes.array,
         events: React.PropTypes.arrayOf(PropTypes.shape({
@@ -22,27 +22,10 @@ export default class PhCalendar extends Component {
         monthCount: 12, // 渲染头部年月的前后一年的时间
         weekStart: 1,
         weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
-        range: true, // 是否支持范围选择
+        range: true,
         disabled: [],
         values: [],
-        events: [
-            {
-                date: new Date(2017, 1, 10),
-                name: '家立减'
-            },
-            {
-                date: new Date(2017, 1, 22),
-                name: '团购'
-            },
-            {
-                date: new Date(2017, 2, 10),
-                name: '劳动节'
-            },
-            {
-                date: new Date(2017, 2, 15),
-                name: '哈哈哈'
-            }
-        ],
+        events: [],
         dateChanged: function(){}
     }
     constructor(props, context) {
@@ -75,7 +58,7 @@ export default class PhCalendar extends Component {
         this.initTitleDateAndScrollTop()
     }
     initTitleDateAndScrollTop(){
-        const doms = [];
+        const doms = []
         const {monthRange} = this.state
         Array.prototype.forEach.call(document.getElementsByClassName('ph-c-month'), (item, index)=>{
             const title = item.getElementsByClassName('ph-c-month-title')[0]
@@ -85,7 +68,7 @@ export default class PhCalendar extends Component {
                 date: monthRange[index]
             })
         })
-        this.monthDOMArr = doms;
+        this.monthDOMArr = doms
         this.refs.phContentWrap.scrollTop = doms[6].offsetTitle
     }
     getCenterDateByValues(values){
@@ -142,25 +125,30 @@ export default class PhCalendar extends Component {
     chooseDate(data, evt) {
         evt.stopPropagation()
         evt.preventDefault()
+        const {range} = this.props
         let dateR = this.state.dateRange
         const date = data.date
         if(['pre', 'next'].indexOf(data.type) != -1 || this.checkDisableDate(date)){
             return null
         }
-        if(dateR.length < 2){
-            //compare
-            if(dateR.length === 1){
-                if(dateR[0].getTime() > date.getTime()){
-                    dateR[1] = dateR[0]
-                    dateR[0] = date
+        if(!range){
+            dateR = [date]
+        }else{
+            if(dateR.length < 2){
+                //compare
+                if(dateR.length === 1){
+                    if(dateR[0].getTime() > date.getTime()){
+                        dateR[1] = dateR[0]
+                        dateR[0] = date
+                    }else{
+                        dateR.push(date)
+                    }
                 }else{
                     dateR.push(date)
                 }
             }else{
-                dateR.push(date)
+                dateR = [date]
             }
-        }else{
-            dateR = [date]
         }
         this.props.dateChanged(dateR)
         this.setState({
@@ -206,12 +194,23 @@ export default class PhCalendar extends Component {
         return daysArr
     }
     getDayStyle(data){
+        const {range} = this.props
         const date = data.date
         if(['pre', 'next'].indexOf(data.type) != -1){
             return null
         }
         const chooseStart = this.state.dateRange[0]
         const chooseEnd = this.state.dateRange[1]
+        if(!range){
+            if(chooseStart && chooseStart.toLocaleString() === date.toLocaleString()){
+                return {
+                    type: 2,
+                    className: 'choose-one'
+                }
+            }
+            return null
+        }
+
         if(chooseStart) {
             if(chooseStart.toLocaleString() === date.toLocaleString()){
                 return {
@@ -252,7 +251,7 @@ export default class PhCalendar extends Component {
             layer: true
         })
     }
-    onScrollHandler(evt) {
+    onScrollHandler() {
         const monthDoms = this.monthDOMArr
         const titleDate = this.state.titleDate
         const scrollTop = this.refs.phContentWrap.scrollTop
@@ -272,16 +271,17 @@ export default class PhCalendar extends Component {
         // group month data
         const monthData = this.renderMonth(year, month)
         const groupLen = this.props.weekLabel.length
+        const range = this.props.range
         const result = Array.apply(null, {
             length: Math.ceil(monthData.length / groupLen)
         }).map((x, i) => {
-            return monthData.slice(i * groupLen, (i + 1) * groupLen);
-        });
+            return monthData.slice(i * groupLen, (i + 1) * groupLen)
+        })
         // render td
         return (
             <table className="ph-c-month-week-table" cellSpacing={0} cellPadding={0}>
                 <thead>
-                    <tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr>
+                    <tr><th/><th/><th/><th/><th/><th/><th/></tr>
                 </thead>
                 <tbody>
                 {
@@ -291,14 +291,14 @@ export default class PhCalendar extends Component {
                                 {
                                     group.map((dayItem, dayIndex)=>{
                                         const style = this.getDayStyle(dayItem)
-                                        const isDisabled = this.checkDisableDate(dayItem.date) ? 'day_disabled':''
+                                        const isDisabled = this.checkDisableDate(dayItem.date) ? 'day_disabled' : ''
                                         if(style){
                                             return (
                                                 <td key={dayIndex} onClick={this.chooseDate.bind(this, dayItem)} className={style.className + ' day_status_'+ dayItem.type + ' ' + isDisabled}>
                                                     <div>
                                                         <div className="day">{dayItem.date.getDate()}</div>
                                                         {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
-                                                        <div className="choose">{style.type == 0? '': (style.type == -1?'开始':'结束')}</div>
+                                                        {range && <div className="choose">{style.type == 0 ? '': (style.type == -1?'开始':'结束')}</div>}
                                                     </div>
                                                 </td>
                                             )
@@ -360,7 +360,7 @@ export default class PhCalendar extends Component {
                         }
                     </div>
                 </div>
-                {this.state.layer && <div className="ph-c-top-panel-layer"></div>}
+                {this.state.layer && <div className="ph-c-top-panel-layer"/>}
             </div>
         )
     }

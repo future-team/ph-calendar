@@ -97,71 +97,6 @@ body {
           font-size: 15px;
         }
       }
-      // ul style
-      .ph-c-month-week {
-        border-top: 1px solid #E1E1E1;
-        margin-right: -1px;
-        li {
-          float: left;
-          width: 14.285%;
-          height: 60px;
-          text-align: center;
-          border: 1px solid transparent;
-          border-right-color: #E1E1E1;
-          border-bottom-color: #E1E1E1;
-          box-sizing: border-box;
-          font-size: 15px;
-          &.day_status_pre, &.day_status_next {
-            color: #cccccc;
-          }
-          &.day_status_current {
-            color: #000;
-          }
-          //
-          &.choose-end, &.choose-start {
-            background: #FF6633;
-            color: #ffffff;
-            border-color: #FF6633;
-          }
-          &.choose-between {
-            background: #FFD3C6;
-            color: #FF6633;
-          }
-
-          //
-          .day {
-            margin-top: 3px;
-          }
-          .week {
-            //display: none;
-          }
-          .event {
-            position: relative;
-            color: #FD0000;
-            margin-top: 3px;
-            text-size-adjust: none;
-            font-size: 8px;
-            &:before {
-              content: ' ';
-              position: absolute;
-              width: 3px;
-              height: 3px;
-              border-radius: 3px;
-              left: 50%;
-              margin-left: -1.5px;
-              margin-top: 3px;
-              top: -6px;
-              background-color: #FD0000;
-            }
-            p {
-              //transform: scale(0.533);
-            }
-          }
-          .choose {
-            font-size: 10px;
-          }
-        }
-      }
       &:first-child {
         .ph-c-month-title{
           display: none;
@@ -232,7 +167,7 @@ body {
               color: #000;
             }
             //
-            &.choose-end, &.choose-start {
+            &.choose-end, &.choose-start, &.choose-one {
               background: #FF6633;
               color: #ffffff;
               border-color: #FF6633;
