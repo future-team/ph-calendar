@@ -49,7 +49,7 @@ export default class PhCalendar extends Component {
         }))
     }
     static defaultProps = {
-        monthCount: 6, // 渲染头部年月的前后一年的时间
+        monthCount: 3, // 渲染头部年月的前后一年的时间
         weekStart: 1,
         weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
         range: true,
@@ -147,9 +147,9 @@ export default class PhCalendar extends Component {
         let month = date.getMonth()
         const year = date.getFullYear()
         const count = this.props.monthCount
-        const middle = Math.floor(count/2)
+        const middle = Math.ceil(count/2)
         let arr = []
-        for(let i = -(middle-1); i < middle; i++){
+        for(let i = 1 - middle; i < middle; i++){
             arr.push(new Date(year, month+i))
         }
         return arr
@@ -345,6 +345,8 @@ export default class PhCalendar extends Component {
      * scroll event be listened for change title date
      */
     onScrollHandler() {
+        // hhhhh
+        this.longTouch = true
         const monthDoms = this.monthDOMArr
         const titleDate = this.state.titleDate
         const scrollTop = this.refs.phContentWrap.scrollTop
@@ -413,13 +415,13 @@ export default class PhCalendar extends Component {
                             <tr key={i}>
                                 {
                                     group.map((dayItem, dayIndex)=>{
-                                        const style = this.getDayStyle(dayItem)
-                                        const isDisabled = this.checkDisableDate(dayItem.date) ? 'day_disabled' : ''
+                                        const style = dayItem.status
+                                        const isDisabled = dayItem.disabled ? 'day_disabled' : ''
                                         if(style){
                                             return (
                                                 <td key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item ' + style.className + ' day_status_'+ dayItem.type + ' ' + isDisabled}>
                                                     <div>
-                                                        <div className="day">{dayItem.date.getDate()}</div>
+                                                        <div className="day">{dayItem.day}</div>
                                                         {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
                                                         {range && <div className="choose">{style.type == 0 ? '': (style.type == -1?'开始':'结束')}</div>}
                                                     </div>
@@ -429,7 +431,7 @@ export default class PhCalendar extends Component {
                                             return (
                                                 <td key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item day_status_'+ dayItem.type  + ' ' + isDisabled}>
                                                     <div>
-                                                        <div className="day">{dayItem.date.getDate()}</div>
+                                                        <div className="day">{dayItem.day}</div>
                                                         {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
                                                     </div>
                                                 </td>
@@ -462,6 +464,7 @@ export default class PhCalendar extends Component {
                     </div>
                 </div>
                 <div className="ph-c-content-wrap" ref="phContentWrap"
+                     onScroll={::this.onScrollHandler}
                      onTouchStart={::this.onTouchStartHandler}
                      onTouchMove={::this.onTouchMoveHandler}
                      onTouchEnd={::this.onTouchEndHandler}
@@ -478,7 +481,7 @@ export default class PhCalendar extends Component {
                                         </div>
                                         <div className="ph-c-month-week-container">
                                             {
-                                                this.renderDataToUlStyle(year, month)
+                                                this.renderDataToTableStyle(year, month)
                                             }
                                         </div>
                                     </div>

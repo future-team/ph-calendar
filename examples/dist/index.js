@@ -19922,7 +19922,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'defaultProps',
 	        value: {
-	            monthCount: 6, // 渲染头部年月的前后一年的时间
+	            monthCount: 3, // 渲染头部年月的前后一年的时间
 	            weekStart: 1,
 	            weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
 	            range: true,
@@ -20034,9 +20034,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var month = date.getMonth();
 	        var year = date.getFullYear();
 	        var count = this.props.monthCount;
-	        var middle = Math.floor(count / 2);
+	        var middle = Math.ceil(count / 2);
 	        var arr = [];
-	        for (var i = -(middle - 1); i < middle; i++) {
+	        for (var i = 1 - middle; i < middle; i++) {
 	            arr.push(new Date(year, month + i));
 	        }
 	        return arr;
@@ -20252,6 +20252,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	
 	    PhCalendar.prototype.onScrollHandler = function onScrollHandler() {
+	        // hhhhh
+	        this.longTouch = true;
 	        var monthDoms = this.monthDOMArr;
 	        var titleDate = this.state.titleDate;
 	        var scrollTop = this.refs.phContentWrap.scrollTop;
@@ -20327,8 +20329,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    PhCalendar.prototype.renderDataToTableStyle = function renderDataToTableStyle(year, month) {
-	        var _this3 = this;
-	
 	        // group month data
 	        var monthData = this.renderMonth(year, month);
 	        var groupLen = this.props.weekLabel.length;
@@ -20365,8 +20365,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        'tr',
 	                        { key: i },
 	                        group.map(function (dayItem, dayIndex) {
-	                            var style = _this3.getDayStyle(dayItem);
-	                            var isDisabled = _this3.checkDisableDate(dayItem.date) ? 'day_disabled' : '';
+	                            var style = dayItem.status;
+	                            var isDisabled = dayItem.disabled ? 'day_disabled' : '';
 	                            if (style) {
 	                                return _react2['default'].createElement(
 	                                    'td',
@@ -20377,7 +20377,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                        _react2['default'].createElement(
 	                                            'div',
 	                                            { className: 'day' },
-	                                            dayItem.date.getDate()
+	                                            dayItem.day
 	                                        ),
 	                                        dayItem.event && _react2['default'].createElement(
 	                                            'div',
@@ -20405,7 +20405,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                        _react2['default'].createElement(
 	                                            'div',
 	                                            { className: 'day' },
-	                                            dayItem.date.getDate()
+	                                            dayItem.day
 	                                        ),
 	                                        dayItem.event && _react2['default'].createElement(
 	                                            'div',
@@ -20427,7 +20427,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    PhCalendar.prototype.render = function render() {
-	        var _this4 = this;
+	        var _this3 = this;
 	
 	        var _props2 = this.props;
 	        var weekStart = _props2.weekStart;
@@ -20459,6 +20459,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            _react2['default'].createElement(
 	                'div',
 	                { className: 'ph-c-content-wrap', ref: 'phContentWrap',
+	                    onScroll: this.onScrollHandler.bind(this),
 	                    onTouchStart: this.onTouchStartHandler.bind(this),
 	                    onTouchMove: this.onTouchMoveHandler.bind(this),
 	                    onTouchEnd: this.onTouchEndHandler.bind(this)
@@ -20487,7 +20488,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            _react2['default'].createElement(
 	                                'div',
 	                                { className: 'ph-c-month-week-container' },
-	                                _this4.renderDataToUlStyle(year, month)
+	                                _this3.renderDataToTableStyle(year, month)
 	                            )
 	                        );
 	                    })
