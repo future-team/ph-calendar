@@ -38,7 +38,7 @@ export default class PhCalendar extends Component {
         monthCount: PropTypes.number,
         weekStart: PropTypes.number,
         weekLabel: PropTypes.array,
-        dateChanged: PropTypes.func,
+        dateChose: PropTypes.func,
         range: PropTypes.bool, // 是否支持范围选择
         disabled: PropTypes.array,// 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
         values: PropTypes.array,
@@ -56,7 +56,7 @@ export default class PhCalendar extends Component {
         disabled: [],
         values: [],
         events: [],
-        dateChanged: function(){}
+        dateChose: function(){}
     }
     constructor(props, context) {
         super(props, context)
@@ -186,7 +186,7 @@ export default class PhCalendar extends Component {
                 dateR = [date]
             }
         }
-        this.props.dateChanged(dateR)
+        this.props.dateChose(dateR)
         this.setState({
             dateRange: dateR
         })
@@ -208,10 +208,15 @@ export default class PhCalendar extends Component {
         let i = 0, dateItem = firstDate
         dateItem.setDate(1 - firstDateWeek + weekStart)
         while (i < count){
+            const date = new Date(dateItem)
             let item = {
                 weekLabel: weekLabel[dateItem.getDay()],
                 event: this.checkEvent(dateItem),
-                date: new Date(dateItem)
+                date: date,
+                day: date.getDate(),
+                week: date.getDay(),
+                month: date.getMonth(),
+                year: date.getFullYear()
             }
             if(i < firstDateWeek - weekStart) {
                 // pre month
@@ -223,6 +228,10 @@ export default class PhCalendar extends Component {
                 // current month
                 item.type = 'current'
             }
+            // get style
+            item.status = this.getDayStyle(item)
+            // check disabled
+            item.disabled = this.checkDisableDate(date)
             daysArr.push(item)
             i++
             dateItem.setDate(dateItem.getDate()+1)
@@ -312,22 +321,23 @@ export default class PhCalendar extends Component {
         this.longTouch = false
         setTimeout(()=>{
             this.longTouch = true
-        }, 100)
+        }, 200)
     }
     onTouchMoveHandler(evt) {
         evt.stopPropagation()
-        // deal move
     }
     onTouchEndHandler(evt){
         evt.stopPropagation()
         if(this.longTouch !== true) {
             // deal click event
-            const dataset = evt.target.closest('.day-item').dataset
-            this.chooseDate({
-                type: dataset.type,
-                date: new Date(dataset.date)
-            })
-            // evt.preventDefault()
+            const dom = evt.target.closest('.day-item')
+            if(dom && dom.dataset){
+                const dataset = dom.dataset
+                this.chooseDate({
+                    type: dataset.type,
+                    date: new Date(dataset.date)
+                })
+            }
         }
     }
 
@@ -357,12 +367,12 @@ export default class PhCalendar extends Component {
             <ul className="ph-c-clearfix ph-c-month-week">
                 {
                     this.renderMonth(year, month).map((dayItem, dayIndex)=>{
-                        const style = this.getDayStyle(dayItem)
-                        const isDisabled = this.checkDisableDate(dayItem.date) ? 'day_disabled' : ''
+                        const style = dayItem.status
+                        const isDisabled = dayItem.disabled ? 'day_disabled' : ''
                         if(style){
                             return (
                                 <li key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item ' + style.className + ' day_status_'+ dayItem.type  + ' ' + isDisabled}>
-                                    <div className="day">{dayItem.date.getDate()}</div>
+                                    <div className="day">{dayItem.day}</div>
                                     {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
                                     {range && <div className="choose">{style.type == 0 ? '': (style.type == -1?'开始':'结束')}</div>}
                                 </li>
@@ -370,7 +380,7 @@ export default class PhCalendar extends Component {
                         }else{
                             return (
                                 <li key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item day_status_'+ dayItem.type   + ' ' + isDisabled}>
-                                    <div className="day">{dayItem.date.getDate()}</div>
+                                    <div className="day">{dayItem.day}</div>
                                     {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
                                 </li>
                             )

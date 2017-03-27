@@ -139,7 +139,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            'div',
 	            { className: 'rcs-demo' },
 	            _react2['default'].createElement(_srcIndexJs2['default'], { values: values,
-	                dateChanged: this.chooseCallback,
+	                dateChoosed: this.chooseCallback,
 	                disabled: disabled,
 	                events: events,
 	                weekStart: weekStart,
@@ -19908,7 +19908,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            monthCount: _react.PropTypes.number,
 	            weekStart: _react.PropTypes.number,
 	            weekLabel: _react.PropTypes.array,
-	            dateChanged: _react.PropTypes.func,
+	            dateChose: _react.PropTypes.func,
 	            range: _react.PropTypes.bool, // 是否支持范围选择
 	            disabled: _react.PropTypes.array, // 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
 	            values: _react.PropTypes.array,
@@ -19929,7 +19929,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            disabled: [],
 	            values: [],
 	            events: [],
-	            dateChanged: function dateChanged() {}
+	            dateChose: function dateChose() {}
 	        },
 	        enumerable: true
 	    }]);
@@ -20075,7 +20075,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                dateR = [date];
 	            }
 	        }
-	        this.props.dateChanged(dateR);
+	        this.props.dateChose(dateR);
 	        this.setState({
 	            dateRange: dateR
 	        });
@@ -20103,10 +20103,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dateItem = firstDate;
 	        dateItem.setDate(1 - firstDateWeek + weekStart);
 	        while (i < count) {
+	            var date = new Date(dateItem);
 	            var item = {
 	                weekLabel: weekLabel[dateItem.getDay()],
 	                event: this.checkEvent(dateItem),
-	                date: new Date(dateItem)
+	                date: date,
+	                day: date.getDate(),
+	                week: date.getDay(),
+	                month: date.getMonth(),
+	                year: date.getFullYear()
 	            };
 	            if (i < firstDateWeek - weekStart) {
 	                // pre month
@@ -20118,6 +20123,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                // current month
 	                item.type = 'current';
 	            }
+	            // get style
+	            item.status = this.getDayStyle(item);
+	            // check disabled
+	            item.disabled = this.checkDisableDate(date);
 	            daysArr.push(item);
 	            i++;
 	            dateItem.setDate(dateItem.getDate() + 1);
@@ -20216,24 +20225,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.longTouch = false;
 	        setTimeout(function () {
 	            _this2.longTouch = true;
-	        }, 100);
+	        }, 200);
 	    };
 	
 	    PhCalendar.prototype.onTouchMoveHandler = function onTouchMoveHandler(evt) {
 	        evt.stopPropagation();
-	        // deal move
 	    };
 	
 	    PhCalendar.prototype.onTouchEndHandler = function onTouchEndHandler(evt) {
 	        evt.stopPropagation();
 	        if (this.longTouch !== true) {
 	            // deal click event
-	            var dataset = evt.target.closest('.day-item').dataset;
-	            this.chooseDate({
-	                type: dataset.type,
-	                date: new Date(dataset.date)
-	            });
-	            // evt.preventDefault()
+	            var dom = evt.target.closest('.day-item');
+	            if (dom && dom.dataset) {
+	                var dataset = dom.dataset;
+	                this.chooseDate({
+	                    type: dataset.type,
+	                    date: new Date(dataset.date)
+	                });
+	            }
 	        }
 	    };
 	
@@ -20261,15 +20271,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // will delete
 	
 	    PhCalendar.prototype.renderDataToUlStyle = function renderDataToUlStyle(year, month) {
-	        var _this3 = this;
-	
 	        var range = this.props.range;
 	        return _react2['default'].createElement(
 	            'ul',
 	            { className: 'ph-c-clearfix ph-c-month-week' },
 	            this.renderMonth(year, month).map(function (dayItem, dayIndex) {
-	                var style = _this3.getDayStyle(dayItem);
-	                var isDisabled = _this3.checkDisableDate(dayItem.date) ? 'day_disabled' : '';
+	                var style = dayItem.status;
+	                var isDisabled = dayItem.disabled ? 'day_disabled' : '';
 	                if (style) {
 	                    return _react2['default'].createElement(
 	                        'li',
@@ -20277,7 +20285,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        _react2['default'].createElement(
 	                            'div',
 	                            { className: 'day' },
-	                            dayItem.date.getDate()
+	                            dayItem.day
 	                        ),
 	                        dayItem.event && _react2['default'].createElement(
 	                            'div',
@@ -20301,7 +20309,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        _react2['default'].createElement(
 	                            'div',
 	                            { className: 'day' },
-	                            dayItem.date.getDate()
+	                            dayItem.day
 	                        ),
 	                        dayItem.event && _react2['default'].createElement(
 	                            'div',
@@ -20319,7 +20327,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    PhCalendar.prototype.renderDataToTableStyle = function renderDataToTableStyle(year, month) {
-	        var _this4 = this;
+	        var _this3 = this;
 	
 	        // group month data
 	        var monthData = this.renderMonth(year, month);
@@ -20357,8 +20365,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        'tr',
 	                        { key: i },
 	                        group.map(function (dayItem, dayIndex) {
-	                            var style = _this4.getDayStyle(dayItem);
-	                            var isDisabled = _this4.checkDisableDate(dayItem.date) ? 'day_disabled' : '';
+	                            var style = _this3.getDayStyle(dayItem);
+	                            var isDisabled = _this3.checkDisableDate(dayItem.date) ? 'day_disabled' : '';
 	                            if (style) {
 	                                return _react2['default'].createElement(
 	                                    'td',
@@ -20419,7 +20427,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    PhCalendar.prototype.render = function render() {
-	        var _this5 = this;
+	        var _this4 = this;
 	
 	        var _props2 = this.props;
 	        var weekStart = _props2.weekStart;
@@ -20480,7 +20488,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            _react2['default'].createElement(
 	                                'div',
 	                                { className: 'ph-c-month-week-container' },
-	                                _this5.renderDataToUlStyle(year, month)
+	                                _this4.renderDataToUlStyle(year, month)
 	                            )
 	                        );
 	                    })

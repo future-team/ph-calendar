@@ -44,7 +44,7 @@ class Demo extends Component {
         return (
             <div className="rcs-demo">
                 <PhCalendar values={values}
-                            dateChanged={this.chooseCallback}
+                            dateChoosed={this.chooseCallback}
                             disabled={disabled}
                             events={events}
                             weekStart={weekStart}
