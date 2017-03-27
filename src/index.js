@@ -465,7 +465,6 @@ export default class PhCalendar extends Component {
                      onTouchStart={::this.onTouchStartHandler}
                      onTouchMove={::this.onTouchMoveHandler}
                      onTouchEnd={::this.onTouchEndHandler}
-                     onScroll={::this.onScrollHandler}
                 >
                     <div className="ph-c-content" ref="phContent">
                         {
