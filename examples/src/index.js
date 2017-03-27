@@ -1,17 +1,17 @@
-import React from 'react'
+import React, {Component, PropTypes} from 'react'
 import ReactDom from 'react/lib/ReactDOM'
 import PhCalendar from '../../src/index.js'
 import './demo.less'
 
-class Demo extends React.Component {
+class Demo extends Component {
     constructor(props, context) {
         super(props, context)
         this.state = {
             values: [new Date(2017, 1, 24), new Date(2017, 2, 10)],
             disabled:[new Date(2017, 2, 14), new Date(2017, 2, 17)],// start end 包括
-            weekStart: 0,
-            range: false,
-            weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            weekStart: 1,
+            range: true,
+            //weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             events: [
                 {
                     date: new Date(2017, 1, 10),
