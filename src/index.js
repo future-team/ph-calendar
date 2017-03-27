@@ -49,7 +49,7 @@ export default class PhCalendar extends Component {
         }))
     }
     static defaultProps = {
-        monthCount: 3, // 渲染头部年月的前后一年的时间
+        monthCount: 10, // 渲染头部年月的前后一年的时间
         weekStart: 1,
         weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
         range: true,
@@ -347,7 +347,7 @@ export default class PhCalendar extends Component {
     onScrollHandler() {
         // hhhhh
         this.longTouch = true
-        const monthDoms = this.monthDOMArr
+        /*const monthDoms = this.monthDOMArr
         const titleDate = this.state.titleDate
         const scrollTop = this.refs.phContentWrap.scrollTop
         const len = monthDoms.length
@@ -360,7 +360,7 @@ export default class PhCalendar extends Component {
             this.setState({
                 titleDate: currentDate
             })
-        }
+        }*/
     }
     // will delete
     renderDataToUlStyle(year, month){

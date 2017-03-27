@@ -19922,7 +19922,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'defaultProps',
 	        value: {
-	            monthCount: 3, // 渲染头部年月的前后一年的时间
+	            monthCount: 10, // 渲染头部年月的前后一年的时间
 	            weekStart: 1,
 	            weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
 	            range: true,
@@ -20254,20 +20254,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	    PhCalendar.prototype.onScrollHandler = function onScrollHandler() {
 	        // hhhhh
 	        this.longTouch = true;
-	        var monthDoms = this.monthDOMArr;
-	        var titleDate = this.state.titleDate;
-	        var scrollTop = this.refs.phContentWrap.scrollTop;
-	        var len = monthDoms.length;
-	        var currentDate = (function () {
-	            for (var i = 0; i < len; i++) {
-	                if (scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date;
+	        /*const monthDoms = this.monthDOMArr
+	        const titleDate = this.state.titleDate
+	        const scrollTop = this.refs.phContentWrap.scrollTop
+	        const len = monthDoms.length
+	        const currentDate = (()=>{
+	            for(let i=0; i<len; i++){
+	                if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
 	            }
-	        })();
-	        if (titleDate.toLocaleString() != currentDate.toLocaleString()) {
+	        })()
+	        if(titleDate.toLocaleString() != currentDate.toLocaleString()){
 	            this.setState({
 	                titleDate: currentDate
-	            });
-	        }
+	            })
+	        }*/
 	    };
 	
 	    // will delete
