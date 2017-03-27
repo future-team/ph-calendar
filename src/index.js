@@ -154,6 +154,12 @@ export default class PhCalendar extends Component {
         }
         return arr
     }
+
+    /**
+     * set choose date
+     * @param data
+     * @return {null}
+     */
     chooseDate(data) {
         const {range} = this.props
         let dateR = this.state.dateRange
@@ -223,6 +229,12 @@ export default class PhCalendar extends Component {
         }
         return daysArr
     }
+
+    /**
+     * mark choose date style
+     * @param data
+     * @return {*}
+     */
     getDayStyle(data){
         const {range} = this.props
         const date = data.date
@@ -256,7 +268,6 @@ export default class PhCalendar extends Component {
                     className: 'choose-between'
                 }
             }
-
             if(date.toLocaleString() === chooseEnd.toLocaleString()){
                 return {
                     type: 1,
@@ -266,6 +277,11 @@ export default class PhCalendar extends Component {
         }
         return null
     }
+
+    /**
+     * top panel click chang date callback
+     * @param date
+     */
     titleDateChanged(date){
         this.setState({
             monthRange: this.getMonthRange(date),
@@ -275,25 +291,31 @@ export default class PhCalendar extends Component {
             this.initTitleDateAndScrollTop()
         }, 0)
     }
+
+    /**
+     * title click callback
+     * only show `layer`
+     */
     titleClick(){
         // trigger layer
         this.setState({
             layer: true
         })
     }
-    // deal click event
+
+    /**
+     * only deal click event for 300ms delay
+     * @param evt
+     */
     onTouchStartHandler(evt) {
         evt.stopPropagation()
         this.longTouch = false
         setTimeout(()=>{
             this.longTouch = true
         }, 200)
-        this.touchstartx =  evt.touches[0].pageX
     }
     onTouchMoveHandler(evt) {
         evt.stopPropagation()
-        this.touchmovex =  evt.touches[0].pageX
-        this.movex = this.touchstartx - this.touchmovex
         // deal move
     }
     onTouchEndHandler(evt){
@@ -305,8 +327,13 @@ export default class PhCalendar extends Component {
                 type: dataset.type,
                 date: new Date(dataset.date)
             })
+            // evt.preventDefault()
         }
     }
+
+    /**
+     * scroll event be listened for change title date
+     */
     onScrollHandler() {
         const monthDoms = this.monthDOMArr
         const titleDate = this.state.titleDate
@@ -322,6 +349,36 @@ export default class PhCalendar extends Component {
                 titleDate: currentDate
             })
         }
+    }
+    // will delete
+    renderDataToUlStyle(year, month){
+        const range = this.props.range
+        return (
+            <ul className="ph-c-clearfix ph-c-month-week">
+                {
+                    this.renderMonth(year, month).map((dayItem, dayIndex)=>{
+                        const style = this.getDayStyle(dayItem)
+                        const isDisabled = this.checkDisableDate(dayItem.date) ? 'day_disabled' : ''
+                        if(style){
+                            return (
+                                <li key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item ' + style.className + ' day_status_'+ dayItem.type  + ' ' + isDisabled}>
+                                    <div className="day">{dayItem.date.getDate()}</div>
+                                    {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
+                                    {range && <div className="choose">{style.type == 0 ? '': (style.type == -1?'开始':'结束')}</div>}
+                                </li>
+                            )
+                        }else{
+                            return (
+                                <li key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item day_status_'+ dayItem.type   + ' ' + isDisabled}>
+                                    <div className="day">{dayItem.date.getDate()}</div>
+                                    {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
+                                </li>
+                            )
+                        }
+                    })
+                }
+            </ul>
+        )
     }
     renderDataToTableStyle(year, month){
         // group month data
@@ -411,7 +468,7 @@ export default class PhCalendar extends Component {
                                         </div>
                                         <div className="ph-c-month-week-container">
                                             {
-                                                this.renderDataToTableStyle(year, month)
+                                                this.renderDataToUlStyle(year, month)
                                             }
                                         </div>
                                     </div>

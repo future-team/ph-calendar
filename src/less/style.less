@@ -105,6 +105,89 @@ body {
           display: none;
         }
       }
+      // ul style
+      .ph-c-month-week {
+        border-top: 1px solid #E1E1E1;
+        margin-right: -1px;
+        li {
+          float: left;
+          width: 14.285%;
+          height: 60px;
+          text-align: center;
+          border: 1px solid transparent;
+          border-right-color: #E1E1E1;
+          border-bottom-color: #E1E1E1;
+          box-sizing: border-box;
+          font-size: 15px;
+          .day {
+            margin-top: 10px;
+          }
+          .week {
+            //display: none;
+          }
+          .event {
+            position: relative;
+            color: #FD0000;
+            margin-top: 5px;
+            font-size: 8px;
+            &:before {
+              content: ' ';
+              position: absolute;
+              width: 4px;
+              height: 4px;
+              border-radius: 4px;
+              left: 50%;
+              margin-left: -2px;
+              margin-top: 3px;
+              top: -6px;
+              background-color: #FD0000;
+            }
+            p {
+              //transform: scale(0.533);
+            }
+          }
+          .choose {
+            margin-top: 5px;
+            font-size: 10px;
+          }
+          &:first-child {
+            border-left-color: transparent;
+          }
+          &:last-child {
+            border-right-color: transparent;
+          }
+          &.day_status_pre, &.day_status_next {
+            .day,.week, .event {
+              display: none;
+            }
+          }
+          &.day_status_current {
+            color: #000;
+          }
+          //
+          &.choose-end, &.choose-start, &.choose-one {
+            background: #FF6633;
+            color: #ffffff;
+            border-color: #FF6633;
+            .event {
+              color: #ffffff;
+              &:before {
+                background-color: #ffffff;
+              }
+            }
+          }
+          &.choose-between {
+            background: #FFD3C6;
+            color: #FF6633;
+          }
+          &.day_disabled {
+            color: #cccccc;
+            .day,.week, .event {
+              color: #cccccc;
+            }
+          }
+        }
+      }
       // table style
       .ph-c-month-week-container {
 
