@@ -10,6 +10,7 @@ class Demo extends Component {
             values: [new Date(2017, 1, 24), new Date(2017, 2, 10)],
             disabled:[new Date(2017, 2, 14), new Date(2017, 2, 17)],// start end 包括
             weekStart: 1,
+            monthCount: 12,
             range: true,
             //weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             events: [
@@ -40,13 +41,14 @@ class Demo extends Component {
         console.log('选择后的日期', data)
     }
     render() {
-        const {values, disabled, weekStart, events, weekLabel, range} = this.state
+        const {values, disabled, weekStart, events, weekLabel, range, monthCount} = this.state
         return (
             <div className="rcs-demo">
                 <PhCalendar values={values}
                             dateChoosed={this.chooseCallback}
                             disabled={disabled}
                             events={events}
+                            monthCount={monthCount}
                             weekStart={weekStart}
                             weekLabel={weekLabel}
                             range={range}

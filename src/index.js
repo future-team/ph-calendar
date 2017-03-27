@@ -42,7 +42,7 @@ export default class PhCalendar extends Component {
         range: PropTypes.bool, // 是否支持范围选择
         disabled: PropTypes.array,// 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
         values: PropTypes.array,
-        format: 'yyyy-MM-dd',
+        format: PropTypes.string,
         events: React.PropTypes.arrayOf(PropTypes.shape({
             date: PropTypes.object,
             name: PropTypes.string,
@@ -50,6 +50,7 @@ export default class PhCalendar extends Component {
         }))
     }
     static defaultProps = {
+        format: 'yyyy-MM-dd',
         monthCount: 12, // 渲染头部年月的前后一年的时间
         weekStart: 1,
         weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
@@ -70,8 +71,6 @@ export default class PhCalendar extends Component {
             yearRange: [], // 选择年份的列表
             dateRange: values, // 选择日期的范围,如果是只有一个，则默认是单选了
             changeDate: false,
-            changeDateYear: false,
-            changeDateMonth: false,
             titleDate: monthRange[Math.floor(props.monthCount/2)]
         }
     }
@@ -290,32 +289,6 @@ export default class PhCalendar extends Component {
         }
         return null
     }
-
-    /**
-     * top panel click chang date callback
-     * @param date
-     */
-    titleDateChanged(date){
-        this.setState({
-            monthRange: this.getMonthRange(date),
-            layer: false
-        })
-        setTimeout(()=>{
-            this.initTitleDateAndScrollTop()
-        }, 0)
-    }
-
-    /**
-     * title click callback
-     * only show `layer`
-     */
-    titleClick(){
-        // trigger layer
-        this.setState({
-            layer: true
-        })
-    }
-
     /**
      * only deal click event for 300ms delay
      * @param evt
@@ -452,6 +425,49 @@ export default class PhCalendar extends Component {
             </table>
         )
     }
+    // to title deal
+    renderYearSelect(){
+        this.setState({
+            changeDate: true,
+            layer: true
+        })
+    }
+    renderMonthSelect(){
+        this.setState({
+            changeDate: true,
+            layer: true
+        })
+    }
+    /**
+     * top panel click chang date callback
+     * @param date
+     */
+    titleDateChanged(date){
+        this.setState({
+            changeDate: false,
+            monthRange: this.getMonthRange(date),
+            layer: false
+        })
+        setTimeout(()=>{
+            this.initTitleDateAndScrollTop()
+        }, 0)
+    }
+    renderTitleContent(){
+        const {titleDate, changeDate} = this.state
+        const year = titleDate.getFullYear()
+        const month = titleDate.getMonth()
+        if(!changeDate) {
+            return (
+                <div className="ph-c-top-panel">
+                    <div className="ph-c-top-panel-title">
+                        <p><span onClick={this.renderYearSelect.bind(this)}>{year}</span>年<span onClick={this.renderMonthSelect.bind(this)}>{month+1}</span>月</p>
+                    </div>
+                </div>
+            )
+        } else {
+            return (<TopPanel date={titleDate} changeDate={changeDate} dateChanged={::this.titleDateChanged}/>)
+        }
+    }
     render(){
         const {weekStart, weekLabel} = this.props
         return (
@@ -465,7 +481,9 @@ export default class PhCalendar extends Component {
                         }
                     </div>
                     <div className="ph-c-date">
-                        <TopPanel date={this.state.titleDate} dateChanged={::this.titleDateChanged} titleClick={::this.titleClick}/>
+                        {
+                            this.renderTitleContent()
+                        }
                     </div>
                 </div>
                 <div className="ph-c-content-wrap" ref="phContentWrap"

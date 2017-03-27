@@ -94,6 +94,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            values: [new Date(2017, 1, 24), new Date(2017, 2, 10)],
 	            disabled: [new Date(2017, 2, 14), new Date(2017, 2, 17)], // start end 包括
 	            weekStart: 1,
+	            monthCount: 12,
 	            range: true,
 	            //weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 	            events: [{
@@ -134,6 +135,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var events = _state.events;
 	        var weekLabel = _state.weekLabel;
 	        var range = _state.range;
+	        var monthCount = _state.monthCount;
 	
 	        return _react2['default'].createElement(
 	            'div',
@@ -142,6 +144,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                dateChoosed: this.chooseCallback,
 	                disabled: disabled,
 	                events: events,
+	                monthCount: monthCount,
 	                weekStart: weekStart,
 	                weekLabel: weekLabel,
 	                range: range
@@ -19912,7 +19915,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            range: _react.PropTypes.bool, // 是否支持范围选择
 	            disabled: _react.PropTypes.array, // 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
 	            values: _react.PropTypes.array,
-	            format: 'yyyy-MM-dd',
+	            format: _react.PropTypes.string,
 	            events: _react2['default'].PropTypes.arrayOf(_react.PropTypes.shape({
 	                date: _react.PropTypes.object,
 	                name: _react.PropTypes.string,
@@ -19923,6 +19926,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'defaultProps',
 	        value: {
+	            format: 'yyyy-MM-dd',
 	            monthCount: 12, // 渲染头部年月的前后一年的时间
 	            weekStart: 1,
 	            weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
@@ -19948,8 +19952,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            yearRange: [], // 选择年份的列表
 	            dateRange: values, // 选择日期的范围,如果是只有一个，则默认是单选了
 	            changeDate: false,
-	            changeDateYear: false,
-	            changeDateMonth: false,
 	            titleDate: monthRange[Math.floor(props.monthCount / 2)]
 	        };
 	    }
@@ -20191,46 +20193,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    /**
-	     * top panel click chang date callback
-	     * @param date
-	     */
-	
-	    PhCalendar.prototype.titleDateChanged = function titleDateChanged(date) {
-	        var _this2 = this;
-	
-	        this.setState({
-	            monthRange: this.getMonthRange(date),
-	            layer: false
-	        });
-	        setTimeout(function () {
-	            _this2.initTitleDateAndScrollTop();
-	        }, 0);
-	    };
-	
-	    /**
-	     * title click callback
-	     * only show `layer`
-	     */
-	
-	    PhCalendar.prototype.titleClick = function titleClick() {
-	        // trigger layer
-	        this.setState({
-	            layer: true
-	        });
-	    };
-	
-	    /**
 	     * only deal click event for 300ms delay
 	     * @param evt
 	     */
 	
 	    PhCalendar.prototype.onTouchStartHandler = function onTouchStartHandler(evt) {
-	        var _this3 = this;
+	        var _this2 = this;
 	
 	        evt.stopPropagation();
 	        this.longTouch = false;
 	        setTimeout(function () {
-	            _this3.longTouch = true;
+	            _this2.longTouch = true;
 	        }, 200);
 	    };
 	
@@ -20433,6 +20406,77 @@ return /******/ (function(modules) { // webpackBootstrap
 	        );
 	    };
 	
+	    // to title deal
+	
+	    PhCalendar.prototype.renderYearSelect = function renderYearSelect() {
+	        this.setState({
+	            changeDate: true,
+	            layer: true
+	        });
+	    };
+	
+	    PhCalendar.prototype.renderMonthSelect = function renderMonthSelect() {
+	        this.setState({
+	            changeDate: true,
+	            layer: true
+	        });
+	    };
+	
+	    /**
+	     * top panel click chang date callback
+	     * @param date
+	     */
+	
+	    PhCalendar.prototype.titleDateChanged = function titleDateChanged(date) {
+	        var _this3 = this;
+	
+	        this.setState({
+	            changeDate: false,
+	            monthRange: this.getMonthRange(date),
+	            layer: false
+	        });
+	        setTimeout(function () {
+	            _this3.initTitleDateAndScrollTop();
+	        }, 0);
+	    };
+	
+	    PhCalendar.prototype.renderTitleContent = function renderTitleContent() {
+	        var _state = this.state;
+	        var titleDate = _state.titleDate;
+	        var changeDate = _state.changeDate;
+	
+	        var year = titleDate.getFullYear();
+	        var month = titleDate.getMonth();
+	        if (!changeDate) {
+	            return _react2['default'].createElement(
+	                'div',
+	                { className: 'ph-c-top-panel' },
+	                _react2['default'].createElement(
+	                    'div',
+	                    { className: 'ph-c-top-panel-title' },
+	                    _react2['default'].createElement(
+	                        'p',
+	                        null,
+	                        _react2['default'].createElement(
+	                            'span',
+	                            { onClick: this.renderYearSelect.bind(this) },
+	                            year
+	                        ),
+	                        '年',
+	                        _react2['default'].createElement(
+	                            'span',
+	                            { onClick: this.renderMonthSelect.bind(this) },
+	                            month + 1
+	                        ),
+	                        '月'
+	                    )
+	                )
+	            );
+	        } else {
+	            return _react2['default'].createElement(_TopPanel2['default'], { date: titleDate, changeDate: changeDate, dateChanged: this.titleDateChanged.bind(this) });
+	        }
+	    };
+	
 	    PhCalendar.prototype.render = function render() {
 	        var _this4 = this;
 	
@@ -20460,7 +20504,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                _react2['default'].createElement(
 	                    'div',
 	                    { className: 'ph-c-date' },
-	                    _react2['default'].createElement(_TopPanel2['default'], { date: this.state.titleDate, dateChanged: this.titleDateChanged.bind(this), titleClick: this.titleClick.bind(this) })
+	                    this.renderTitleContent()
 	                )
 	            ),
 	            _react2['default'].createElement(
@@ -20538,15 +20582,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: {
 	            date: _react.PropTypes.object,
 	            dateChanged: _react.PropTypes.func,
-	            titleClick: _react.PropTypes.func
+	            changeDate: _react.PropTypes.bool
 	        },
 	        enumerable: true
 	    }, {
 	        key: 'defaultProps',
 	        value: {
 	            date: new Date(),
-	            dateChanged: function dateChanged() {},
-	            titleClick: function titleClick() {}
+	            changeDate: false,
+	            dateChanged: function dateChanged() {}
 	        },
 	        enumerable: true
 	    }]);
@@ -20560,8 +20604,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var years = this.getYears(year);
 	        this.state = {
 	            date: props.date,
-	            changeDate: false,
-	            changeYear: false,
+	            changeDate: props.changeDate,
+	            changeYear: true,
 	            changeMonth: false,
 	            years: years
 	        };
@@ -20570,7 +20614,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    TopPanel.prototype.componentWillReceiveProps = function componentWillReceiveProps(nextProps) {
 	        // only update title
 	        this.setState({
-	            date: nextProps.date
+	            date: nextProps.date,
+	            changeDate: nextProps.changeDate
 	        });
 	    };
 	
@@ -20651,8 +20696,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	    };
 	
-	    TopPanel.prototype.renderYearSelect = function renderYearSelect(evt) {
-	        this.props.titleClick(evt);
+	    TopPanel.prototype.renderYearSelect = function renderYearSelect() {
 	        this.setState({
 	            changeDate: true,
 	            changeYear: true,
@@ -20660,8 +20704,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	    };
 	
-	    TopPanel.prototype.renderMonthSelect = function renderMonthSelect(evt) {
-	        this.props.titleClick(evt);
+	    TopPanel.prototype.renderMonthSelect = function renderMonthSelect() {
 	        this.setState({
 	            changeDate: true,
 	            changeYear: false,

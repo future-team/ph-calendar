@@ -4,12 +4,12 @@ export default class TopPanel extends Component {
     static propTypes = {
         date: PropTypes.object,
         dateChanged: PropTypes.func,
-        titleClick: PropTypes.func
+        changeDate: PropTypes.bool
     }
     static defaultProps = {
         date: new Date(),
-        dateChanged: function(){},
-        titleClick: function(){}
+        changeDate: false,
+        dateChanged: function(){}
     }
     constructor(props, context) {
         super(props, context)
@@ -18,8 +18,8 @@ export default class TopPanel extends Component {
         const years = this.getYears(year)
         this.state = {
             date: props.date,
-            changeDate: false,
-            changeYear: false,
+            changeDate: props.changeDate,
+            changeYear: true,
             changeMonth: false,
             years: years
         }
@@ -27,7 +27,8 @@ export default class TopPanel extends Component {
     componentWillReceiveProps(nextProps){
         // only update title
         this.setState({
-            date: nextProps.date
+            date: nextProps.date,
+            changeDate: nextProps.changeDate
         })
     }
     onTouchStartHandler(evt) {
@@ -96,16 +97,14 @@ export default class TopPanel extends Component {
             years: years
         })
     }
-    renderYearSelect(evt){
-        this.props.titleClick(evt)
+    renderYearSelect(){
         this.setState({
             changeDate: true,
             changeYear: true,
             changeMonth: false
         })
     }
-    renderMonthSelect(evt){
-        this.props.titleClick(evt)
+    renderMonthSelect(){
         this.setState({
             changeDate: true,
             changeYear: false,
@@ -120,7 +119,7 @@ export default class TopPanel extends Component {
             return (<p><span
                 onClick={this.renderYearSelect.bind(this)}>{year}</span>年<span
                 onClick={this.renderMonthSelect.bind(this)}>{month+1}</span>月</p>)
-        }else if(changeYear){
+        }else if(changeYear) {
             return (<p><span>{years[0]}年-{years.slice(-1)[0]}年</span></p>)
         }else if(changeMonth) {
             return (<p><span
