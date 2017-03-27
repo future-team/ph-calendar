@@ -1,7 +1,9 @@
 import React, {Component, PropTypes} from 'react'
 import TopPanel from './TopPanel'
-import {checkType} from './utils'
+import {checkType, dateFormat} from './utils'
 import './less/style.less'
+import * as fastclick from 'fastclick'
+
 // element-closest | CC0-1.0 | github.com/jonathantneal/closest
 (function (ElementProto) {
     if (typeof ElementProto.matches !== 'function') {
@@ -86,17 +88,26 @@ export default class PhCalendar extends Component {
     componentDidMount() {
         // 计算每个日历月份的高度，为scroll到当前区域改变当前月份的时间做准备
         this.initTitleDateAndScrollTop()
-        window.addEventListener('scroll', ()=>{
-            this.onScrollHandler()
-        }, false)
-        // window.document.onscroll = ()=>{
-        //     this.onScrollHandler()
-        // }
+
+        if ('addEventListener' in document) {
+            document.addEventListener('scroll', ()=>{
+                this.onScrollHandler()
+            }, false)
+        }
+        fastclick.attach(document.body)
+    }
+    // event callback
+    dataChoseCallback(){
+        const {dateRange} = this.state
+        dateRange.map((item)=>{
+            return dateFormat(item, this.props.format)
+        })
+        this.props.dateChose(dateRange)
     }
     initTitleDateAndScrollTop(){
         const doms = []
         const {monthRange} = this.state
-        const middle = Math.floor(this.props.monthCount/2)
+        // const bodyScrollTop = document.body.scrollTop
         Array.prototype.forEach.call(document.getElementsByClassName('ph-c-month'), (item, index)=>{
             const title = item.getElementsByClassName('ph-c-month-title')[0]
             doms.push({
@@ -106,7 +117,6 @@ export default class PhCalendar extends Component {
             })
         })
         this.monthDOMArr = doms
-        this.refs.phContentWrap.scrollTop = doms[middle].offsetTitle
     }
     getCenterDateByValues(values){
         if(values.length && checkType(values[0], 'date')){
@@ -175,6 +185,8 @@ export default class PhCalendar extends Component {
         }
         if(!range){
             dateR = [date]
+            // single choose
+            this.dataChoseCallback()
         }else{
             if(dateR.length < 2){
                 //compare
@@ -185,6 +197,8 @@ export default class PhCalendar extends Component {
                     }else{
                         dateR.push(date)
                     }
+                    // range choose
+                    this.dataChoseCallback()
                 }else{
                     dateR.push(date)
                 }
@@ -192,13 +206,12 @@ export default class PhCalendar extends Component {
                 dateR = [date]
             }
         }
-        this.props.dateChose(dateR)
         this.setState({
             dateRange: dateR
         })
     }
     /**
-     *
+     * 居然出bug了！
      * @param year
      * @param month base on 0, eg: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
      */
@@ -208,7 +221,7 @@ export default class PhCalendar extends Component {
         const lastDate = new Date(year, month+1, 0)
         const days = lastDate.getDate()
         const firstDateWeek = firstDate.getDay()
-        const lines = Math.ceil((days+firstDateWeek-weekStart)/7)
+        let lines = Math.ceil((days+firstDateWeek-weekStart)/weekLabel.length)
         const count = lines * weekLabel.length
         let daysArr = []
         let i = 0, dateItem = firstDate
@@ -292,32 +305,16 @@ export default class PhCalendar extends Component {
         }
         return null
     }
-    /**
-     * only deal click event for 300ms delay
-     * @param evt
-     */
-    onTouchStartHandler(evt) {
+    onChooseHandler(evt){
         evt.stopPropagation()
-        this.longTouch = false
-        setTimeout(()=>{
-            this.longTouch = true
-        }, 200)
-    }
-    onTouchMoveHandler(evt) {
-        evt.stopPropagation()
-    }
-    onTouchEndHandler(evt){
-        evt.stopPropagation()
-        if(!this.longTouch) {
-            // deal click event
-            const dom = evt.target.closest('.day-item')
-            if(dom && dom.dataset){
-                const dataset = dom.dataset
-                this.chooseDate({
-                    type: dataset.type,
-                    date: new Date(dataset.date)
-                })
-            }
+        // deal click event
+        const dom = evt.target.closest('.day-item')
+        if(dom && dom.dataset){
+            const dataset = dom.dataset
+            this.chooseDate({
+                type: dataset.type,
+                date: new Date(dataset.date)
+            })
         }
     }
 
@@ -325,23 +322,26 @@ export default class PhCalendar extends Component {
      * scroll event be listened for change title date
      */
     onScrollHandler() {
-        // hhhhh
-        this.longTouch = true
-        const monthDoms = this.monthDOMArr
-        const titleDate = this.state.titleDate
-        // body
-        const scrollTop = window.document.body.scrollTop
-        const len = monthDoms.length
-        const currentDate = (()=>{
-            for(let i=0; i<len; i++){
-                if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
-            }
-        })()
-        if(titleDate.toLocaleString() != currentDate.toLocaleString()){
-            // this.setState({
-            //     titleDate: currentDate
-            // })
+        if(this.timer) {
+            window.clearTimeout(this.timer)
         }
+        this.timer = setTimeout(()=>{
+            const monthDoms = this.monthDOMArr
+            const titleDate = this.state.titleDate
+            // body
+            const scrollTop = window.document.body.scrollTop
+            const len = monthDoms.length
+            const currentDate = (()=>{
+                for(let i=0; i<len; i++){
+                    if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
+                }
+            })()
+            if(titleDate.toLocaleString() != currentDate.toLocaleString()){
+                this.setState({
+                    titleDate: currentDate
+                })
+            }
+        }, 50)
     }
     // will delete
     renderDataToUlStyle(year, month){
@@ -445,6 +445,12 @@ export default class PhCalendar extends Component {
      * top panel click chang date callback
      * @param date
      */
+    titleClickCallback(){
+        // only trigger layer
+        this.setState({
+            layer: true
+        })
+    }
     titleDateChanged(date){
         this.setState({
             changeDate: false,
@@ -473,6 +479,7 @@ export default class PhCalendar extends Component {
     }
     render(){
         const {weekStart, weekLabel} = this.props
+        const {titleDate} = this.state
         return (
             <div className="ph-c-container">
                 <div className="ph-c-header-fixed">
@@ -484,36 +491,29 @@ export default class PhCalendar extends Component {
                         }
                     </div>
                     <div className="ph-c-date">
-                        {
-                            this.renderTitleContent()
-                        }
+                        <TopPanel date={titleDate} dateChanged={::this.titleDateChanged} titleClick={::this.titleClickCallback}/>
                     </div>
                 </div>
-                <div className="ph-c-content-wrap" ref="phContentWrap"
-                     onTouchStart={::this.onTouchStartHandler}
-                     onTouchMove={::this.onTouchMoveHandler}
-                     onTouchEnd={::this.onTouchEndHandler}
-                >
-                    <div className="ph-c-content" ref="phContent">
-                        {
-                            this.state.monthRange.map((monthItem, monthIndex)=>{
-                                const year = monthItem.getFullYear()
-                                const month = monthItem.getMonth()
-                                return (
-                                    <div className="ph-c-month" key={monthIndex}>
-                                        <div className="ph-c-month-title">
-                                            <p>{year}年{month+1}月</p>
-                                        </div>
-                                        <div className="ph-c-month-week-container">
-                                            {
-                                                this.renderDataToUlStyle(year, month)
-                                            }
-                                        </div>
+                <div className="ph-c-content"
+                     onClick={::this.onChooseHandler}>
+                    {
+                        this.state.monthRange.map((monthItem, monthIndex)=>{
+                            const year = monthItem.getFullYear()
+                            const month = monthItem.getMonth()
+                            return (
+                                <div className="ph-c-month" key={monthIndex}>
+                                    <div className="ph-c-month-title">
+                                        <p>{year}年{month+1}月</p>
                                     </div>
-                                )
-                            })
-                        }
-                    </div>
+                                    <div className="ph-c-month-week-container">
+                                        {
+                                            this.renderDataToUlStyle(year, month)
+                                        }
+                                    </div>
+                                </div>
+                            )
+                        })
+                    }
                 </div>
                 {this.state.layer && <div className="ph-c-top-panel-layer"/>}
             </div>

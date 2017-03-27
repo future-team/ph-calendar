@@ -15,8 +15,9 @@
     "calendar"
   ],
   "dependencies": {
-    "extend": "^3.0.0",
     "classnames": "^2.1.3",
+    "extend": "^3.0.0",
+    "fastclick": "^1.0.6",
     "handlebars": "^4.0.5"
   },
   "devDependencies": {
@@ -33,6 +34,7 @@
     "eslint-loader": "^1.5.0",
     "eslint-plugin-react": "^6.2.0",
     "extract-text-webpack-plugin": "^0.8.2",
+    "file-loader": "^0.10.1",
     "gfs-doc": "^0.1.26",
     "glob": "^5.0.14",
     "gulp": "^3.9.0",

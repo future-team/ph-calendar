@@ -67,6 +67,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
@@ -81,9 +83,45 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _TopPanel2 = _interopRequireDefault(_TopPanel);
 	
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 	
-	__webpack_require__(5);
+	__webpack_require__(6);
+	
+	var _fastclick = __webpack_require__(4);
+	
+	var fastclick = _interopRequireWildcard(_fastclick);
+	
+	// element-closest | CC0-1.0 | github.com/jonathantneal/closest
+	(function (ElementProto) {
+	    if (typeof ElementProto.matches !== 'function') {
+	        ElementProto.matches = ElementProto.msMatchesSelector || ElementProto.mozMatchesSelector || ElementProto.webkitMatchesSelector || function matches(selector) {
+	            var element = this;
+	            var elements = (element.document || element.ownerDocument).querySelectorAll(selector);
+	            var index = 0;
+	
+	            while (elements[index] && elements[index] !== element) {
+	                ++index;
+	            }
+	
+	            return Boolean(elements[index]);
+	        };
+	    }
+	    if (typeof ElementProto.closest !== 'function') {
+	        ElementProto.closest = function closest(selector) {
+	            var element = this;
+	
+	            while (element && element.nodeType === 1) {
+	                if (element.matches(selector)) {
+	                    return element;
+	                }
+	
+	                element = element.parentNode;
+	            }
+	
+	            return null;
+	        };
+	    }
+	})(window.Element.prototype);
 	
 	var PhCalendar = (function (_Component) {
 	    _inherits(PhCalendar, _Component);
@@ -94,10 +132,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            monthCount: _react.PropTypes.number,
 	            weekStart: _react.PropTypes.number,
 	            weekLabel: _react.PropTypes.array,
-	            dateChanged: _react.PropTypes.func,
+	            dateChose: _react.PropTypes.func,
 	            range: _react.PropTypes.bool, // 是否支持范围选择
 	            disabled: _react.PropTypes.array, // 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
 	            values: _react.PropTypes.array,
+	            format: _react.PropTypes.string,
 	            events: _react2['default'].PropTypes.arrayOf(_react.PropTypes.shape({
 	                date: _react.PropTypes.object,
 	                name: _react.PropTypes.string,
@@ -108,6 +147,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'defaultProps',
 	        value: {
+	            format: 'yyyy-MM-dd',
 	            monthCount: 12, // 渲染头部年月的前后一年的时间
 	            weekStart: 1,
 	            weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
@@ -115,7 +155,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            disabled: [],
 	            values: [],
 	            events: [],
-	            dateChanged: function dateChanged() {}
+	            dateChose: function dateChose() {}
 	        },
 	        enumerable: true
 	    }]);
@@ -133,9 +173,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            yearRange: [], // 选择年份的列表
 	            dateRange: values, // 选择日期的范围,如果是只有一个，则默认是单选了
 	            changeDate: false,
-	            changeDateYear: false,
-	            changeDateMonth: false,
-	            titleDate: monthRange[6]
+	            titleDate: monthRange[Math.floor(props.monthCount / 2)]
 	        };
 	    }
 	
@@ -144,20 +182,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var monthRange = this.getMonthRange(this.getCenterDateByValues(values));
 	        this.setState({
 	            dateRange: values,
-	            titleDate: monthRange[6],
+	            titleDate: monthRange[Math.floor(nextPros.monthCount / 2)],
 	            monthRange: monthRange
 	        });
 	    };
 	
 	    PhCalendar.prototype.componentDidMount = function componentDidMount() {
+	        var _this = this;
+	
 	        // 计算每个日历月份的高度，为scroll到当前区域改变当前月份的时间做准备
 	        this.initTitleDateAndScrollTop();
+	
+	        if ('addEventListener' in document) {
+	            document.addEventListener('scroll', function () {
+	                _this.onScrollHandler();
+	            }, false);
+	        }
+	        fastclick.attach(document.body);
+	    };
+	
+	    // event callback
+	
+	    PhCalendar.prototype.dataChoseCallback = function dataChoseCallback() {
+	        var _this2 = this;
+	
+	        var dateRange = this.state.dateRange;
+	
+	        dateRange.map(function (item) {
+	            return _utils.dateFormat(item, _this2.props.format);
+	        });
+	        this.props.dateChose(dateRange);
 	    };
 	
 	    PhCalendar.prototype.initTitleDateAndScrollTop = function initTitleDateAndScrollTop() {
 	        var doms = [];
 	        var monthRange = this.state.monthRange;
 	
+	        // const bodyScrollTop = document.body.scrollTop
 	        Array.prototype.forEach.call(document.getElementsByClassName('ph-c-month'), function (item, index) {
 	            var title = item.getElementsByClassName('ph-c-month-title')[0];
 	            doms.push({
@@ -167,7 +228,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            });
 	        });
 	        this.monthDOMArr = doms;
-	        this.refs.phContentWrap.scrollTop = doms[6].offsetTitle;
 	    };
 	
 	    PhCalendar.prototype.getCenterDateByValues = function getCenterDateByValues(values) {
@@ -215,21 +275,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return name;
 	    };
 	
-	    // 渲染12个，一年的，在前后各加减
-	
 	    PhCalendar.prototype.getMonthRange = function getMonthRange(date) {
 	        var month = date.getMonth();
 	        var year = date.getFullYear();
+	        var count = this.props.monthCount;
+	        var middle = Math.ceil(count / 2);
 	        var arr = [];
-	        for (var i = -5; i < 6; i++) {
+	        for (var i = 1 - middle; i < middle; i++) {
 	            arr.push(new Date(year, month + i));
 	        }
 	        return arr;
 	    };
 	
-	    PhCalendar.prototype.chooseDate = function chooseDate(data, evt) {
-	        evt.stopPropagation();
-	        evt.preventDefault();
+	    /**
+	     * set choose date
+	     * @param data
+	     * @return {null}
+	     */
+	
+	    PhCalendar.prototype.chooseDate = function chooseDate(data) {
 	        var range = this.props.range;
 	
 	        var dateR = this.state.dateRange;
@@ -239,6 +303,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (!range) {
 	            dateR = [date];
+	            // single choose
+	            this.dataChoseCallback();
 	        } else {
 	            if (dateR.length < 2) {
 	                //compare
@@ -249,6 +315,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    } else {
 	                        dateR.push(date);
 	                    }
+	                    // range choose
+	                    this.dataChoseCallback();
 	                } else {
 	                    dateR.push(date);
 	                }
@@ -256,14 +324,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                dateR = [date];
 	            }
 	        }
-	        this.props.dateChanged(dateR);
 	        this.setState({
 	            dateRange: dateR
 	        });
 	    };
 	
 	    /**
-	     *
+	     * 居然出bug了！
 	     * @param year
 	     * @param month base on 0, eg: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 	     */
@@ -277,17 +344,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var lastDate = new Date(year, month + 1, 0);
 	        var days = lastDate.getDate();
 	        var firstDateWeek = firstDate.getDay();
-	        var lines = Math.ceil((days + firstDateWeek - weekStart) / 7);
+	        var lines = Math.ceil((days + firstDateWeek - weekStart) / weekLabel.length);
 	        var count = lines * weekLabel.length;
 	        var daysArr = [];
 	        var i = 0,
 	            dateItem = firstDate;
 	        dateItem.setDate(1 - firstDateWeek + weekStart);
 	        while (i < count) {
+	            var date = new Date(dateItem);
 	            var item = {
 	                weekLabel: weekLabel[dateItem.getDay()],
 	                event: this.checkEvent(dateItem),
-	                date: new Date(dateItem)
+	                date: date,
+	                day: date.getDate(),
+	                week: date.getDay(),
+	                month: date.getMonth(),
+	                year: date.getFullYear()
 	            };
 	            if (i < firstDateWeek - weekStart) {
 	                // pre month
@@ -299,12 +371,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	                // current month
 	                item.type = 'current';
 	            }
+	            // get style
+	            item.status = this.getDayStyle(item);
+	            // check disabled
+	            item.disabled = this.checkDisableDate(date);
 	            daysArr.push(item);
 	            i++;
 	            dateItem.setDate(dateItem.getDate() + 1);
 	        }
 	        return daysArr;
 	    };
+	
+	    /**
+	     * mark choose date style
+	     * @param data
+	     * @return {*}
+	     */
 	
 	    PhCalendar.prototype.getDayStyle = function getDayStyle(data) {
 	        var range = this.props.range;
@@ -340,7 +422,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    className: 'choose-between'
 	                };
 	            }
-	
 	            if (date.toLocaleString() === chooseEnd.toLocaleString()) {
 	                return {
 	                    type: 1,
@@ -351,45 +432,107 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return null;
 	    };
 	
-	    PhCalendar.prototype.titleDateChanged = function titleDateChanged(date) {
-	        var _this = this;
-	
-	        this.setState({
-	            monthRange: this.getMonthRange(date),
-	            layer: false
-	        });
-	        setTimeout(function () {
-	            _this.initTitleDateAndScrollTop();
-	        }, 0);
-	    };
-	
-	    PhCalendar.prototype.titleClick = function titleClick() {
-	        // trigger layer
-	        this.setState({
-	            layer: true
-	        });
-	    };
-	
-	    PhCalendar.prototype.onScrollHandler = function onScrollHandler() {
-	        var monthDoms = this.monthDOMArr;
-	        var titleDate = this.state.titleDate;
-	        var scrollTop = this.refs.phContentWrap.scrollTop;
-	        var len = monthDoms.length;
-	        var currentDate = (function () {
-	            for (var i = 0; i < len; i++) {
-	                if (scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date;
-	            }
-	        })();
-	        if (titleDate.toLocaleString() != currentDate.toLocaleString()) {
-	            // this.setState({
-	            //     titleDate: currentDate
-	            // })
+	    PhCalendar.prototype.onChooseHandler = function onChooseHandler(evt) {
+	        evt.stopPropagation();
+	        // deal click event
+	        var dom = evt.target.closest('.day-item');
+	        if (dom && dom.dataset) {
+	            var dataset = dom.dataset;
+	            this.chooseDate({
+	                type: dataset.type,
+	                date: new Date(dataset.date)
+	            });
 	        }
 	    };
 	
-	    PhCalendar.prototype.renderDataToTableStyle = function renderDataToTableStyle(year, month) {
-	        var _this2 = this;
+	    /**
+	     * scroll event be listened for change title date
+	     */
 	
+	    PhCalendar.prototype.onScrollHandler = function onScrollHandler() {
+	        var _this3 = this;
+	
+	        if (this.timer) {
+	            window.clearTimeout(this.timer);
+	        }
+	        this.timer = setTimeout(function () {
+	            var monthDoms = _this3.monthDOMArr;
+	            var titleDate = _this3.state.titleDate;
+	            // body
+	            var scrollTop = window.document.body.scrollTop;
+	            var len = monthDoms.length;
+	            var currentDate = (function () {
+	                for (var i = 0; i < len; i++) {
+	                    if (scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date;
+	                }
+	            })();
+	            if (titleDate.toLocaleString() != currentDate.toLocaleString()) {
+	                _this3.setState({
+	                    titleDate: currentDate
+	                });
+	            }
+	        }, 50);
+	    };
+	
+	    // will delete
+	
+	    PhCalendar.prototype.renderDataToUlStyle = function renderDataToUlStyle(year, month) {
+	        var range = this.props.range;
+	        return _react2['default'].createElement(
+	            'ul',
+	            { className: 'ph-c-clearfix ph-c-month-week' },
+	            this.renderMonth(year, month).map(function (dayItem, dayIndex) {
+	                var style = dayItem.status;
+	                var isDisabled = dayItem.disabled ? 'day_disabled' : '';
+	                if (style) {
+	                    return _react2['default'].createElement(
+	                        'li',
+	                        { key: dayIndex, 'data-type': dayItem.type, 'data-date': dayItem.date, className: 'day-item ' + style.className + ' day_status_' + dayItem.type + ' ' + isDisabled },
+	                        _react2['default'].createElement(
+	                            'div',
+	                            { className: 'day' },
+	                            dayItem.day
+	                        ),
+	                        dayItem.event && _react2['default'].createElement(
+	                            'div',
+	                            { className: 'event' },
+	                            _react2['default'].createElement(
+	                                'p',
+	                                null,
+	                                dayItem.event
+	                            )
+	                        ),
+	                        range && _react2['default'].createElement(
+	                            'div',
+	                            { className: 'choose' },
+	                            style.type == 0 ? '' : style.type == -1 ? '开始' : '结束'
+	                        )
+	                    );
+	                } else {
+	                    return _react2['default'].createElement(
+	                        'li',
+	                        { key: dayIndex, 'data-type': dayItem.type, 'data-date': dayItem.date, className: 'day-item day_status_' + dayItem.type + ' ' + isDisabled },
+	                        _react2['default'].createElement(
+	                            'div',
+	                            { className: 'day' },
+	                            dayItem.day
+	                        ),
+	                        dayItem.event && _react2['default'].createElement(
+	                            'div',
+	                            { className: 'event' },
+	                            _react2['default'].createElement(
+	                                'p',
+	                                null,
+	                                dayItem.event
+	                            )
+	                        )
+	                    );
+	                }
+	            })
+	        );
+	    };
+	
+	    PhCalendar.prototype.renderDataToTableStyle = function renderDataToTableStyle(year, month) {
 	        // group month data
 	        var monthData = this.renderMonth(year, month);
 	        var groupLen = this.props.weekLabel.length;
@@ -426,19 +569,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        'tr',
 	                        { key: i },
 	                        group.map(function (dayItem, dayIndex) {
-	                            var style = _this2.getDayStyle(dayItem);
-	                            var isDisabled = _this2.checkDisableDate(dayItem.date) ? 'day_disabled' : '';
+	                            var style = dayItem.status;
+	                            var isDisabled = dayItem.disabled ? 'day_disabled' : '';
 	                            if (style) {
 	                                return _react2['default'].createElement(
 	                                    'td',
-	                                    { key: dayIndex, onClick: _this2.chooseDate.bind(_this2, dayItem), className: style.className + ' day_status_' + dayItem.type + ' ' + isDisabled },
+	                                    { key: dayIndex, 'data-type': dayItem.type, 'data-date': dayItem.date, className: 'day-item ' + style.className + ' day_status_' + dayItem.type + ' ' + isDisabled },
 	                                    _react2['default'].createElement(
 	                                        'div',
 	                                        null,
 	                                        _react2['default'].createElement(
 	                                            'div',
 	                                            { className: 'day' },
-	                                            dayItem.date.getDate()
+	                                            dayItem.day
 	                                        ),
 	                                        dayItem.event && _react2['default'].createElement(
 	                                            'div',
@@ -459,14 +602,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            } else {
 	                                return _react2['default'].createElement(
 	                                    'td',
-	                                    { key: dayIndex, onClick: _this2.chooseDate.bind(_this2, dayItem), className: 'day_status_' + dayItem.type + ' ' + isDisabled },
+	                                    { key: dayIndex, 'data-type': dayItem.type, 'data-date': dayItem.date, className: 'day-item day_status_' + dayItem.type + ' ' + isDisabled },
 	                                    _react2['default'].createElement(
 	                                        'div',
 	                                        null,
 	                                        _react2['default'].createElement(
 	                                            'div',
 	                                            { className: 'day' },
-	                                            dayItem.date.getDate()
+	                                            dayItem.day
 	                                        ),
 	                                        dayItem.event && _react2['default'].createElement(
 	                                            'div',
@@ -487,12 +630,91 @@ return /******/ (function(modules) { // webpackBootstrap
 	        );
 	    };
 	
+	    // to title deal
+	
+	    PhCalendar.prototype.renderYearSelect = function renderYearSelect() {
+	        this.setState({
+	            changeDate: true,
+	            layer: true
+	        });
+	    };
+	
+	    PhCalendar.prototype.renderMonthSelect = function renderMonthSelect() {
+	        this.setState({
+	            changeDate: true,
+	            layer: true
+	        });
+	    };
+	
+	    /**
+	     * top panel click chang date callback
+	     * @param date
+	     */
+	
+	    PhCalendar.prototype.titleClickCallback = function titleClickCallback() {
+	        // only trigger layer
+	        this.setState({
+	            layer: true
+	        });
+	    };
+	
+	    PhCalendar.prototype.titleDateChanged = function titleDateChanged(date) {
+	        var _this4 = this;
+	
+	        this.setState({
+	            changeDate: false,
+	            monthRange: this.getMonthRange(date),
+	            layer: false
+	        });
+	        setTimeout(function () {
+	            _this4.initTitleDateAndScrollTop();
+	        }, 0);
+	    };
+	
+	    PhCalendar.prototype.renderTitleContent = function renderTitleContent() {
+	        var _state = this.state;
+	        var titleDate = _state.titleDate;
+	        var changeDate = _state.changeDate;
+	
+	        var year = titleDate.getFullYear();
+	        var month = titleDate.getMonth();
+	        if (!changeDate) {
+	            return _react2['default'].createElement(
+	                'div',
+	                { className: 'ph-c-top-panel' },
+	                _react2['default'].createElement(
+	                    'div',
+	                    { className: 'ph-c-top-panel-title' },
+	                    _react2['default'].createElement(
+	                        'p',
+	                        null,
+	                        _react2['default'].createElement(
+	                            'span',
+	                            { onClick: this.renderYearSelect.bind(this) },
+	                            year
+	                        ),
+	                        '年',
+	                        _react2['default'].createElement(
+	                            'span',
+	                            { onClick: this.renderMonthSelect.bind(this) },
+	                            month + 1
+	                        ),
+	                        '月'
+	                    )
+	                )
+	            );
+	        } else {
+	            return _react2['default'].createElement(_TopPanel2['default'], { date: titleDate, changeDate: changeDate, dateChanged: this.titleDateChanged.bind(this) });
+	        }
+	    };
+	
 	    PhCalendar.prototype.render = function render() {
-	        var _this3 = this;
+	        var _this5 = this;
 	
 	        var _props2 = this.props;
 	        var weekStart = _props2.weekStart;
 	        var weekLabel = _props2.weekLabel;
+	        var titleDate = this.state.titleDate;
 	
 	        return _react2['default'].createElement(
 	            'div',
@@ -514,41 +736,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	                _react2['default'].createElement(
 	                    'div',
 	                    { className: 'ph-c-date' },
-	                    _react2['default'].createElement(_TopPanel2['default'], { date: this.state.titleDate, dateChanged: this.titleDateChanged.bind(this), titleClick: this.titleClick.bind(this) })
+	                    _react2['default'].createElement(_TopPanel2['default'], { date: titleDate, dateChanged: this.titleDateChanged.bind(this), titleClick: this.titleClickCallback.bind(this) })
 	                )
 	            ),
 	            _react2['default'].createElement(
 	                'div',
-	                { className: 'ph-c-content-wrap', ref: 'phContentWrap', onScroll: this.onScrollHandler.bind(this) },
-	                _react2['default'].createElement(
-	                    'div',
-	                    { className: 'ph-c-content', ref: 'phContent' },
-	                    this.state.monthRange.map(function (monthItem, monthIndex) {
-	                        var year = monthItem.getFullYear();
-	                        var month = monthItem.getMonth();
-	                        return _react2['default'].createElement(
+	                { className: 'ph-c-content',
+	                    onClick: this.onChooseHandler.bind(this) },
+	                this.state.monthRange.map(function (monthItem, monthIndex) {
+	                    var year = monthItem.getFullYear();
+	                    var month = monthItem.getMonth();
+	                    return _react2['default'].createElement(
+	                        'div',
+	                        { className: 'ph-c-month', key: monthIndex },
+	                        _react2['default'].createElement(
 	                            'div',
-	                            { className: 'ph-c-month', key: monthIndex },
+	                            { className: 'ph-c-month-title' },
 	                            _react2['default'].createElement(
-	                                'div',
-	                                { className: 'ph-c-month-title' },
-	                                _react2['default'].createElement(
-	                                    'p',
-	                                    null,
-	                                    year,
-	                                    '年',
-	                                    month + 1,
-	                                    '月'
-	                                )
-	                            ),
-	                            _react2['default'].createElement(
-	                                'div',
-	                                { className: 'ph-c-month-week-container' },
-	                                _this3.renderDataToTableStyle(year, month)
+	                                'p',
+	                                null,
+	                                year,
+	                                '年',
+	                                month + 1,
+	                                '月'
 	                            )
-	                        );
-	                    })
-	                )
+	                        ),
+	                        _react2['default'].createElement(
+	                            'div',
+	                            { className: 'ph-c-month-week-container' },
+	                            _this5.renderDataToUlStyle(year, month)
+	                        )
+	                    );
+	                })
 	            ),
 	            this.state.layer && _react2['default'].createElement('div', { className: 'ph-c-top-panel-layer' })
 	        );
@@ -576,6 +795,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
@@ -585,6 +806,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _react = __webpack_require__(2);
 	
 	var _react2 = _interopRequireDefault(_react);
+	
+	var _fastclick = __webpack_require__(4);
+	
+	var fastclick = _interopRequireWildcard(_fastclick);
 	
 	var TopPanel = (function (_Component) {
 	    _inherits(TopPanel, _Component);
@@ -623,6 +848,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	    }
 	
+	    TopPanel.prototype.componentDidMount = function componentDidMount() {
+	        fastclick.attach(document.body);
+	    };
+	
 	    TopPanel.prototype.componentWillReceiveProps = function componentWillReceiveProps(nextProps) {
 	        // only update title
 	        this.setState({
@@ -657,6 +886,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (absX > clientWidth / 3) {
 	                this.setYearRange(this.movex);
 	            }
+	        } else {
+	            // deal click event
+	            var year = parseInt(evt.target.closest('.item').dataset.year);
+	            this.setItem(year, 'year');
+	        }
+	    };
+	
+	    TopPanel.prototype.changeMonthHandler = function changeMonthHandler(evt) {
+	        evt.stopPropagation();
+	        if (this.longTouch !== true) {
+	            // deal click event
+	            var month = parseInt(evt.target.closest('.item').dataset.month);
+	            this.setItem(month, 'month');
 	        }
 	    };
 	
@@ -774,8 +1016,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    TopPanel.prototype.renderContent = function renderContent() {
-	        var _this2 = this;
-	
 	        var _state2 = this.state;
 	        var changeDate = _state2.changeDate;
 	        var changeYear = _state2.changeYear;
@@ -797,16 +1037,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    'div',
 	                    {
 	                        className: 'ph-c-top-panel-content',
-	                        onTouchStart: this.onTouchStartHandler.bind(this),
-	                        onTouchMove: this.onTouchMoveHandler.bind(this),
-	                        onTouchEnd: this.changeYearRangeHandler.bind(this) },
+	                        onClick: this.changeYearRangeHandler.bind(this) },
 	                    _react2['default'].createElement(
 	                        'ul',
 	                        { className: 'ph-c-clearfix' },
 	                        years.map(function (item, index) {
 	                            return _react2['default'].createElement(
 	                                'li',
-	                                { key: index, className: 'item', onClick: _this2.setItem.bind(_this2, item, 'year') },
+	                                { key: index, className: 'item', 'data-year': item },
 	                                _react2['default'].createElement(
 	                                    'div',
 	                                    { className: item == year ? 'active' : '' },
@@ -823,14 +1061,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	                { className: 'ph-c-top-panel-container' },
 	                _react2['default'].createElement(
 	                    'div',
-	                    { className: 'ph-c-top-panel-content' },
+	                    {
+	                        className: 'ph-c-top-panel-content',
+	                        onClick: this.changeMonthHandler.bind(this)
+	                    },
 	                    _react2['default'].createElement(
 	                        'ul',
 	                        { className: 'ph-c-clearfix' },
 	                        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function (item, index) {
 	                            return _react2['default'].createElement(
 	                                'li',
-	                                { key: index, className: 'item', onClick: _this2.setItem.bind(_this2, item, 'month') },
+	                                { key: index, className: 'item', 'data-month': item },
 	                                _react2['default'].createElement(
 	                                    'div',
 	                                    { className: item == month ? 'active' : '' },
@@ -845,9 +1086,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	
-	    TopPanel.prototype.setItem = function setItem(data, type, evt) {
-	        evt.stopPropagation();
-	        evt.preventDefault();
+	    TopPanel.prototype.setItem = function setItem(data, type) {
 	        var date = this.state.date;
 	        if (type == 'year') {
 	            date.setFullYear(data);
@@ -891,9 +1130,856 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_RESULT__;;(function () {
+		'use strict';
+	
+		/**
+		 * @preserve FastClick: polyfill to remove click delays on browsers with touch UIs.
+		 *
+		 * @codingstandard ftlabs-jsv2
+		 * @copyright The Financial Times Limited [All Rights Reserved]
+		 * @license MIT License (see LICENSE.txt)
+		 */
+	
+		/*jslint browser:true, node:true*/
+		/*global define, Event, Node*/
+	
+	
+		/**
+		 * Instantiate fast-clicking listeners on the specified layer.
+		 *
+		 * @constructor
+		 * @param {Element} layer The layer to listen on
+		 * @param {Object} [options={}] The options to override the defaults
+		 */
+		function FastClick(layer, options) {
+			var oldOnClick;
+	
+			options = options || {};
+	
+			/**
+			 * Whether a click is currently being tracked.
+			 *
+			 * @type boolean
+			 */
+			this.trackingClick = false;
+	
+	
+			/**
+			 * Timestamp for when click tracking started.
+			 *
+			 * @type number
+			 */
+			this.trackingClickStart = 0;
+	
+	
+			/**
+			 * The element being tracked for a click.
+			 *
+			 * @type EventTarget
+			 */
+			this.targetElement = null;
+	
+	
+			/**
+			 * X-coordinate of touch start event.
+			 *
+			 * @type number
+			 */
+			this.touchStartX = 0;
+	
+	
+			/**
+			 * Y-coordinate of touch start event.
+			 *
+			 * @type number
+			 */
+			this.touchStartY = 0;
+	
+	
+			/**
+			 * ID of the last touch, retrieved from Touch.identifier.
+			 *
+			 * @type number
+			 */
+			this.lastTouchIdentifier = 0;
+	
+	
+			/**
+			 * Touchmove boundary, beyond which a click will be cancelled.
+			 *
+			 * @type number
+			 */
+			this.touchBoundary = options.touchBoundary || 10;
+	
+	
+			/**
+			 * The FastClick layer.
+			 *
+			 * @type Element
+			 */
+			this.layer = layer;
+	
+			/**
+			 * The minimum time between tap(touchstart and touchend) events
+			 *
+			 * @type number
+			 */
+			this.tapDelay = options.tapDelay || 200;
+	
+			/**
+			 * The maximum time for a tap
+			 *
+			 * @type number
+			 */
+			this.tapTimeout = options.tapTimeout || 700;
+	
+			if (FastClick.notNeeded(layer)) {
+				return;
+			}
+	
+			// Some old versions of Android don't have Function.prototype.bind
+			function bind(method, context) {
+				return function() { return method.apply(context, arguments); };
+			}
+	
+	
+			var methods = ['onMouse', 'onClick', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onTouchCancel'];
+			var context = this;
+			for (var i = 0, l = methods.length; i < l; i++) {
+				context[methods[i]] = bind(context[methods[i]], context);
+			}
+	
+			// Set up event handlers as required
+			if (deviceIsAndroid) {
+				layer.addEventListener('mouseover', this.onMouse, true);
+				layer.addEventListener('mousedown', this.onMouse, true);
+				layer.addEventListener('mouseup', this.onMouse, true);
+			}
+	
+			layer.addEventListener('click', this.onClick, true);
+			layer.addEventListener('touchstart', this.onTouchStart, false);
+			layer.addEventListener('touchmove', this.onTouchMove, false);
+			layer.addEventListener('touchend', this.onTouchEnd, false);
+			layer.addEventListener('touchcancel', this.onTouchCancel, false);
+	
+			// Hack is required for browsers that don't support Event#stopImmediatePropagation (e.g. Android 2)
+			// which is how FastClick normally stops click events bubbling to callbacks registered on the FastClick
+			// layer when they are cancelled.
+			if (!Event.prototype.stopImmediatePropagation) {
+				layer.removeEventListener = function(type, callback, capture) {
+					var rmv = Node.prototype.removeEventListener;
+					if (type === 'click') {
+						rmv.call(layer, type, callback.hijacked || callback, capture);
+					} else {
+						rmv.call(layer, type, callback, capture);
+					}
+				};
+	
+				layer.addEventListener = function(type, callback, capture) {
+					var adv = Node.prototype.addEventListener;
+					if (type === 'click') {
+						adv.call(layer, type, callback.hijacked || (callback.hijacked = function(event) {
+							if (!event.propagationStopped) {
+								callback(event);
+							}
+						}), capture);
+					} else {
+						adv.call(layer, type, callback, capture);
+					}
+				};
+			}
+	
+			// If a handler is already declared in the element's onclick attribute, it will be fired before
+			// FastClick's onClick handler. Fix this by pulling out the user-defined handler function and
+			// adding it as listener.
+			if (typeof layer.onclick === 'function') {
+	
+				// Android browser on at least 3.2 requires a new reference to the function in layer.onclick
+				// - the old one won't work if passed to addEventListener directly.
+				oldOnClick = layer.onclick;
+				layer.addEventListener('click', function(event) {
+					oldOnClick(event);
+				}, false);
+				layer.onclick = null;
+			}
+		}
+	
+		/**
+		* Windows Phone 8.1 fakes user agent string to look like Android and iPhone.
+		*
+		* @type boolean
+		*/
+		var deviceIsWindowsPhone = navigator.userAgent.indexOf("Windows Phone") >= 0;
+	
+		/**
+		 * Android requires exceptions.
+		 *
+		 * @type boolean
+		 */
+		var deviceIsAndroid = navigator.userAgent.indexOf('Android') > 0 && !deviceIsWindowsPhone;
+	
+	
+		/**
+		 * iOS requires exceptions.
+		 *
+		 * @type boolean
+		 */
+		var deviceIsIOS = /iP(ad|hone|od)/.test(navigator.userAgent) && !deviceIsWindowsPhone;
+	
+	
+		/**
+		 * iOS 4 requires an exception for select elements.
+		 *
+		 * @type boolean
+		 */
+		var deviceIsIOS4 = deviceIsIOS && (/OS 4_\d(_\d)?/).test(navigator.userAgent);
+	
+	
+		/**
+		 * iOS 6.0-7.* requires the target element to be manually derived
+		 *
+		 * @type boolean
+		 */
+		var deviceIsIOSWithBadTarget = deviceIsIOS && (/OS [6-7]_\d/).test(navigator.userAgent);
+	
+		/**
+		 * BlackBerry requires exceptions.
+		 *
+		 * @type boolean
+		 */
+		var deviceIsBlackBerry10 = navigator.userAgent.indexOf('BB10') > 0;
+	
+		/**
+		 * Determine whether a given element requires a native click.
+		 *
+		 * @param {EventTarget|Element} target Target DOM element
+		 * @returns {boolean} Returns true if the element needs a native click
+		 */
+		FastClick.prototype.needsClick = function(target) {
+			switch (target.nodeName.toLowerCase()) {
+	
+			// Don't send a synthetic click to disabled inputs (issue #62)
+			case 'button':
+			case 'select':
+			case 'textarea':
+				if (target.disabled) {
+					return true;
+				}
+	
+				break;
+			case 'input':
+	
+				// File inputs need real clicks on iOS 6 due to a browser bug (issue #68)
+				if ((deviceIsIOS && target.type === 'file') || target.disabled) {
+					return true;
+				}
+	
+				break;
+			case 'label':
+			case 'iframe': // iOS8 homescreen apps can prevent events bubbling into frames
+			case 'video':
+				return true;
+			}
+	
+			return (/\bneedsclick\b/).test(target.className);
+		};
+	
+	
+		/**
+		 * Determine whether a given element requires a call to focus to simulate click into element.
+		 *
+		 * @param {EventTarget|Element} target Target DOM element
+		 * @returns {boolean} Returns true if the element requires a call to focus to simulate native click.
+		 */
+		FastClick.prototype.needsFocus = function(target) {
+			switch (target.nodeName.toLowerCase()) {
+			case 'textarea':
+				return true;
+			case 'select':
+				return !deviceIsAndroid;
+			case 'input':
+				switch (target.type) {
+				case 'button':
+				case 'checkbox':
+				case 'file':
+				case 'image':
+				case 'radio':
+				case 'submit':
+					return false;
+				}
+	
+				// No point in attempting to focus disabled inputs
+				return !target.disabled && !target.readOnly;
+			default:
+				return (/\bneedsfocus\b/).test(target.className);
+			}
+		};
+	
+	
+		/**
+		 * Send a click event to the specified element.
+		 *
+		 * @param {EventTarget|Element} targetElement
+		 * @param {Event} event
+		 */
+		FastClick.prototype.sendClick = function(targetElement, event) {
+			var clickEvent, touch;
+	
+			// On some Android devices activeElement needs to be blurred otherwise the synthetic click will have no effect (#24)
+			if (document.activeElement && document.activeElement !== targetElement) {
+				document.activeElement.blur();
+			}
+	
+			touch = event.changedTouches[0];
+	
+			// Synthesise a click event, with an extra attribute so it can be tracked
+			clickEvent = document.createEvent('MouseEvents');
+			clickEvent.initMouseEvent(this.determineEventType(targetElement), true, true, window, 1, touch.screenX, touch.screenY, touch.clientX, touch.clientY, false, false, false, false, 0, null);
+			clickEvent.forwardedTouchEvent = true;
+			targetElement.dispatchEvent(clickEvent);
+		};
+	
+		FastClick.prototype.determineEventType = function(targetElement) {
+	
+			//Issue #159: Android Chrome Select Box does not open with a synthetic click event
+			if (deviceIsAndroid && targetElement.tagName.toLowerCase() === 'select') {
+				return 'mousedown';
+			}
+	
+			return 'click';
+		};
+	
+	
+		/**
+		 * @param {EventTarget|Element} targetElement
+		 */
+		FastClick.prototype.focus = function(targetElement) {
+			var length;
+	
+			// Issue #160: on iOS 7, some input elements (e.g. date datetime month) throw a vague TypeError on setSelectionRange. These elements don't have an integer value for the selectionStart and selectionEnd properties, but unfortunately that can't be used for detection because accessing the properties also throws a TypeError. Just check the type instead. Filed as Apple bug #15122724.
+			if (deviceIsIOS && targetElement.setSelectionRange && targetElement.type.indexOf('date') !== 0 && targetElement.type !== 'time' && targetElement.type !== 'month') {
+				length = targetElement.value.length;
+				targetElement.setSelectionRange(length, length);
+			} else {
+				targetElement.focus();
+			}
+		};
+	
+	
+		/**
+		 * Check whether the given target element is a child of a scrollable layer and if so, set a flag on it.
+		 *
+		 * @param {EventTarget|Element} targetElement
+		 */
+		FastClick.prototype.updateScrollParent = function(targetElement) {
+			var scrollParent, parentElement;
+	
+			scrollParent = targetElement.fastClickScrollParent;
+	
+			// Attempt to discover whether the target element is contained within a scrollable layer. Re-check if the
+			// target element was moved to another parent.
+			if (!scrollParent || !scrollParent.contains(targetElement)) {
+				parentElement = targetElement;
+				do {
+					if (parentElement.scrollHeight > parentElement.offsetHeight) {
+						scrollParent = parentElement;
+						targetElement.fastClickScrollParent = parentElement;
+						break;
+					}
+	
+					parentElement = parentElement.parentElement;
+				} while (parentElement);
+			}
+	
+			// Always update the scroll top tracker if possible.
+			if (scrollParent) {
+				scrollParent.fastClickLastScrollTop = scrollParent.scrollTop;
+			}
+		};
+	
+	
+		/**
+		 * @param {EventTarget} targetElement
+		 * @returns {Element|EventTarget}
+		 */
+		FastClick.prototype.getTargetElementFromEventTarget = function(eventTarget) {
+	
+			// On some older browsers (notably Safari on iOS 4.1 - see issue #56) the event target may be a text node.
+			if (eventTarget.nodeType === Node.TEXT_NODE) {
+				return eventTarget.parentNode;
+			}
+	
+			return eventTarget;
+		};
+	
+	
+		/**
+		 * On touch start, record the position and scroll offset.
+		 *
+		 * @param {Event} event
+		 * @returns {boolean}
+		 */
+		FastClick.prototype.onTouchStart = function(event) {
+			var targetElement, touch, selection;
+	
+			// Ignore multiple touches, otherwise pinch-to-zoom is prevented if both fingers are on the FastClick element (issue #111).
+			if (event.targetTouches.length > 1) {
+				return true;
+			}
+	
+			targetElement = this.getTargetElementFromEventTarget(event.target);
+			touch = event.targetTouches[0];
+	
+			if (deviceIsIOS) {
+	
+				// Only trusted events will deselect text on iOS (issue #49)
+				selection = window.getSelection();
+				if (selection.rangeCount && !selection.isCollapsed) {
+					return true;
+				}
+	
+				if (!deviceIsIOS4) {
+	
+					// Weird things happen on iOS when an alert or confirm dialog is opened from a click event callback (issue #23):
+					// when the user next taps anywhere else on the page, new touchstart and touchend events are dispatched
+					// with the same identifier as the touch event that previously triggered the click that triggered the alert.
+					// Sadly, there is an issue on iOS 4 that causes some normal touch events to have the same identifier as an
+					// immediately preceeding touch event (issue #52), so this fix is unavailable on that platform.
+					// Issue 120: touch.identifier is 0 when Chrome dev tools 'Emulate touch events' is set with an iOS device UA string,
+					// which causes all touch events to be ignored. As this block only applies to iOS, and iOS identifiers are always long,
+					// random integers, it's safe to to continue if the identifier is 0 here.
+					if (touch.identifier && touch.identifier === this.lastTouchIdentifier) {
+						event.preventDefault();
+						return false;
+					}
+	
+					this.lastTouchIdentifier = touch.identifier;
+	
+					// If the target element is a child of a scrollable layer (using -webkit-overflow-scrolling: touch) and:
+					// 1) the user does a fling scroll on the scrollable layer
+					// 2) the user stops the fling scroll with another tap
+					// then the event.target of the last 'touchend' event will be the element that was under the user's finger
+					// when the fling scroll was started, causing FastClick to send a click event to that layer - unless a check
+					// is made to ensure that a parent layer was not scrolled before sending a synthetic click (issue #42).
+					this.updateScrollParent(targetElement);
+				}
+			}
+	
+			this.trackingClick = true;
+			this.trackingClickStart = event.timeStamp;
+			this.targetElement = targetElement;
+	
+			this.touchStartX = touch.pageX;
+			this.touchStartY = touch.pageY;
+	
+			// Prevent phantom clicks on fast double-tap (issue #36)
+			if ((event.timeStamp - this.lastClickTime) < this.tapDelay) {
+				event.preventDefault();
+			}
+	
+			return true;
+		};
+	
+	
+		/**
+		 * Based on a touchmove event object, check whether the touch has moved past a boundary since it started.
+		 *
+		 * @param {Event} event
+		 * @returns {boolean}
+		 */
+		FastClick.prototype.touchHasMoved = function(event) {
+			var touch = event.changedTouches[0], boundary = this.touchBoundary;
+	
+			if (Math.abs(touch.pageX - this.touchStartX) > boundary || Math.abs(touch.pageY - this.touchStartY) > boundary) {
+				return true;
+			}
+	
+			return false;
+		};
+	
+	
+		/**
+		 * Update the last position.
+		 *
+		 * @param {Event} event
+		 * @returns {boolean}
+		 */
+		FastClick.prototype.onTouchMove = function(event) {
+			if (!this.trackingClick) {
+				return true;
+			}
+	
+			// If the touch has moved, cancel the click tracking
+			if (this.targetElement !== this.getTargetElementFromEventTarget(event.target) || this.touchHasMoved(event)) {
+				this.trackingClick = false;
+				this.targetElement = null;
+			}
+	
+			return true;
+		};
+	
+	
+		/**
+		 * Attempt to find the labelled control for the given label element.
+		 *
+		 * @param {EventTarget|HTMLLabelElement} labelElement
+		 * @returns {Element|null}
+		 */
+		FastClick.prototype.findControl = function(labelElement) {
+	
+			// Fast path for newer browsers supporting the HTML5 control attribute
+			if (labelElement.control !== undefined) {
+				return labelElement.control;
+			}
+	
+			// All browsers under test that support touch events also support the HTML5 htmlFor attribute
+			if (labelElement.htmlFor) {
+				return document.getElementById(labelElement.htmlFor);
+			}
+	
+			// If no for attribute exists, attempt to retrieve the first labellable descendant element
+			// the list of which is defined here: http://www.w3.org/TR/html5/forms.html#category-label
+			return labelElement.querySelector('button, input:not([type=hidden]), keygen, meter, output, progress, select, textarea');
+		};
+	
+	
+		/**
+		 * On touch end, determine whether to send a click event at once.
+		 *
+		 * @param {Event} event
+		 * @returns {boolean}
+		 */
+		FastClick.prototype.onTouchEnd = function(event) {
+			var forElement, trackingClickStart, targetTagName, scrollParent, touch, targetElement = this.targetElement;
+	
+			if (!this.trackingClick) {
+				return true;
+			}
+	
+			// Prevent phantom clicks on fast double-tap (issue #36)
+			if ((event.timeStamp - this.lastClickTime) < this.tapDelay) {
+				this.cancelNextClick = true;
+				return true;
+			}
+	
+			if ((event.timeStamp - this.trackingClickStart) > this.tapTimeout) {
+				return true;
+			}
+	
+			// Reset to prevent wrong click cancel on input (issue #156).
+			this.cancelNextClick = false;
+	
+			this.lastClickTime = event.timeStamp;
+	
+			trackingClickStart = this.trackingClickStart;
+			this.trackingClick = false;
+			this.trackingClickStart = 0;
+	
+			// On some iOS devices, the targetElement supplied with the event is invalid if the layer
+			// is performing a transition or scroll, and has to be re-detected manually. Note that
+			// for this to function correctly, it must be called *after* the event target is checked!
+			// See issue #57; also filed as rdar://13048589 .
+			if (deviceIsIOSWithBadTarget) {
+				touch = event.changedTouches[0];
+	
+				// In certain cases arguments of elementFromPoint can be negative, so prevent setting targetElement to null
+				targetElement = document.elementFromPoint(touch.pageX - window.pageXOffset, touch.pageY - window.pageYOffset) || targetElement;
+				targetElement.fastClickScrollParent = this.targetElement.fastClickScrollParent;
+			}
+	
+			targetTagName = targetElement.tagName.toLowerCase();
+			if (targetTagName === 'label') {
+				forElement = this.findControl(targetElement);
+				if (forElement) {
+					this.focus(targetElement);
+					if (deviceIsAndroid) {
+						return false;
+					}
+	
+					targetElement = forElement;
+				}
+			} else if (this.needsFocus(targetElement)) {
+	
+				// Case 1: If the touch started a while ago (best guess is 100ms based on tests for issue #36) then focus will be triggered anyway. Return early and unset the target element reference so that the subsequent click will be allowed through.
+				// Case 2: Without this exception for input elements tapped when the document is contained in an iframe, then any inputted text won't be visible even though the value attribute is updated as the user types (issue #37).
+				if ((event.timeStamp - trackingClickStart) > 100 || (deviceIsIOS && window.top !== window && targetTagName === 'input')) {
+					this.targetElement = null;
+					return false;
+				}
+	
+				this.focus(targetElement);
+				this.sendClick(targetElement, event);
+	
+				// Select elements need the event to go through on iOS 4, otherwise the selector menu won't open.
+				// Also this breaks opening selects when VoiceOver is active on iOS6, iOS7 (and possibly others)
+				if (!deviceIsIOS || targetTagName !== 'select') {
+					this.targetElement = null;
+					event.preventDefault();
+				}
+	
+				return false;
+			}
+	
+			if (deviceIsIOS && !deviceIsIOS4) {
+	
+				// Don't send a synthetic click event if the target element is contained within a parent layer that was scrolled
+				// and this tap is being used to stop the scrolling (usually initiated by a fling - issue #42).
+				scrollParent = targetElement.fastClickScrollParent;
+				if (scrollParent && scrollParent.fastClickLastScrollTop !== scrollParent.scrollTop) {
+					return true;
+				}
+			}
+	
+			// Prevent the actual click from going though - unless the target node is marked as requiring
+			// real clicks or if it is in the whitelist in which case only non-programmatic clicks are permitted.
+			if (!this.needsClick(targetElement)) {
+				event.preventDefault();
+				this.sendClick(targetElement, event);
+			}
+	
+			return false;
+		};
+	
+	
+		/**
+		 * On touch cancel, stop tracking the click.
+		 *
+		 * @returns {void}
+		 */
+		FastClick.prototype.onTouchCancel = function() {
+			this.trackingClick = false;
+			this.targetElement = null;
+		};
+	
+	
+		/**
+		 * Determine mouse events which should be permitted.
+		 *
+		 * @param {Event} event
+		 * @returns {boolean}
+		 */
+		FastClick.prototype.onMouse = function(event) {
+	
+			// If a target element was never set (because a touch event was never fired) allow the event
+			if (!this.targetElement) {
+				return true;
+			}
+	
+			if (event.forwardedTouchEvent) {
+				return true;
+			}
+	
+			// Programmatically generated events targeting a specific element should be permitted
+			if (!event.cancelable) {
+				return true;
+			}
+	
+			// Derive and check the target element to see whether the mouse event needs to be permitted;
+			// unless explicitly enabled, prevent non-touch click events from triggering actions,
+			// to prevent ghost/doubleclicks.
+			if (!this.needsClick(this.targetElement) || this.cancelNextClick) {
+	
+				// Prevent any user-added listeners declared on FastClick element from being fired.
+				if (event.stopImmediatePropagation) {
+					event.stopImmediatePropagation();
+				} else {
+	
+					// Part of the hack for browsers that don't support Event#stopImmediatePropagation (e.g. Android 2)
+					event.propagationStopped = true;
+				}
+	
+				// Cancel the event
+				event.stopPropagation();
+				event.preventDefault();
+	
+				return false;
+			}
+	
+			// If the mouse event is permitted, return true for the action to go through.
+			return true;
+		};
+	
+	
+		/**
+		 * On actual clicks, determine whether this is a touch-generated click, a click action occurring
+		 * naturally after a delay after a touch (which needs to be cancelled to avoid duplication), or
+		 * an actual click which should be permitted.
+		 *
+		 * @param {Event} event
+		 * @returns {boolean}
+		 */
+		FastClick.prototype.onClick = function(event) {
+			var permitted;
+	
+			// It's possible for another FastClick-like library delivered with third-party code to fire a click event before FastClick does (issue #44). In that case, set the click-tracking flag back to false and return early. This will cause onTouchEnd to return early.
+			if (this.trackingClick) {
+				this.targetElement = null;
+				this.trackingClick = false;
+				return true;
+			}
+	
+			// Very odd behaviour on iOS (issue #18): if a submit element is present inside a form and the user hits enter in the iOS simulator or clicks the Go button on the pop-up OS keyboard the a kind of 'fake' click event will be triggered with the submit-type input element as the target.
+			if (event.target.type === 'submit' && event.detail === 0) {
+				return true;
+			}
+	
+			permitted = this.onMouse(event);
+	
+			// Only unset targetElement if the click is not permitted. This will ensure that the check for !targetElement in onMouse fails and the browser's click doesn't go through.
+			if (!permitted) {
+				this.targetElement = null;
+			}
+	
+			// If clicks are permitted, return true for the action to go through.
+			return permitted;
+		};
+	
+	
+		/**
+		 * Remove all FastClick's event listeners.
+		 *
+		 * @returns {void}
+		 */
+		FastClick.prototype.destroy = function() {
+			var layer = this.layer;
+	
+			if (deviceIsAndroid) {
+				layer.removeEventListener('mouseover', this.onMouse, true);
+				layer.removeEventListener('mousedown', this.onMouse, true);
+				layer.removeEventListener('mouseup', this.onMouse, true);
+			}
+	
+			layer.removeEventListener('click', this.onClick, true);
+			layer.removeEventListener('touchstart', this.onTouchStart, false);
+			layer.removeEventListener('touchmove', this.onTouchMove, false);
+			layer.removeEventListener('touchend', this.onTouchEnd, false);
+			layer.removeEventListener('touchcancel', this.onTouchCancel, false);
+		};
+	
+	
+		/**
+		 * Check whether FastClick is needed.
+		 *
+		 * @param {Element} layer The layer to listen on
+		 */
+		FastClick.notNeeded = function(layer) {
+			var metaViewport;
+			var chromeVersion;
+			var blackberryVersion;
+			var firefoxVersion;
+	
+			// Devices that don't support touch don't need FastClick
+			if (typeof window.ontouchstart === 'undefined') {
+				return true;
+			}
+	
+			// Chrome version - zero for other browsers
+			chromeVersion = +(/Chrome\/([0-9]+)/.exec(navigator.userAgent) || [,0])[1];
+	
+			if (chromeVersion) {
+	
+				if (deviceIsAndroid) {
+					metaViewport = document.querySelector('meta[name=viewport]');
+	
+					if (metaViewport) {
+						// Chrome on Android with user-scalable="no" doesn't need FastClick (issue #89)
+						if (metaViewport.content.indexOf('user-scalable=no') !== -1) {
+							return true;
+						}
+						// Chrome 32 and above with width=device-width or less don't need FastClick
+						if (chromeVersion > 31 && document.documentElement.scrollWidth <= window.outerWidth) {
+							return true;
+						}
+					}
+	
+				// Chrome desktop doesn't need FastClick (issue #15)
+				} else {
+					return true;
+				}
+			}
+	
+			if (deviceIsBlackBerry10) {
+				blackberryVersion = navigator.userAgent.match(/Version\/([0-9]*)\.([0-9]*)/);
+	
+				// BlackBerry 10.3+ does not require Fastclick library.
+				// https://github.com/ftlabs/fastclick/issues/251
+				if (blackberryVersion[1] >= 10 && blackberryVersion[2] >= 3) {
+					metaViewport = document.querySelector('meta[name=viewport]');
+	
+					if (metaViewport) {
+						// user-scalable=no eliminates click delay.
+						if (metaViewport.content.indexOf('user-scalable=no') !== -1) {
+							return true;
+						}
+						// width=device-width (or less than device-width) eliminates click delay.
+						if (document.documentElement.scrollWidth <= window.outerWidth) {
+							return true;
+						}
+					}
+				}
+			}
+	
+			// IE10 with -ms-touch-action: none or manipulation, which disables double-tap-to-zoom (issue #97)
+			if (layer.style.msTouchAction === 'none' || layer.style.touchAction === 'manipulation') {
+				return true;
+			}
+	
+			// Firefox version - zero for other browsers
+			firefoxVersion = +(/Firefox\/([0-9]+)/.exec(navigator.userAgent) || [,0])[1];
+	
+			if (firefoxVersion >= 27) {
+				// Firefox 27+ does not have tap delay if the content is not zoomable - https://bugzilla.mozilla.org/show_bug.cgi?id=922896
+	
+				metaViewport = document.querySelector('meta[name=viewport]');
+				if (metaViewport && (metaViewport.content.indexOf('user-scalable=no') !== -1 || document.documentElement.scrollWidth <= window.outerWidth)) {
+					return true;
+				}
+			}
+	
+			// IE11: prefixed -ms-touch-action is no longer supported and it's recomended to use non-prefixed version
+			// http://msdn.microsoft.com/en-us/library/windows/apps/Hh767313.aspx
+			if (layer.style.touchAction === 'none' || layer.style.touchAction === 'manipulation') {
+				return true;
+			}
+	
+			return false;
+		};
+	
+	
+		/**
+		 * Factory method for creating a FastClick object
+		 *
+		 * @param {Element} layer The layer to listen on
+		 * @param {Object} [options={}] The options to override the defaults
+		 */
+		FastClick.attach = function(layer, options) {
+			return new FastClick(layer, options);
+		};
+	
+	
+		if (true) {
+	
+			// AMD. Register as an anonymous module.
+			!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+				return FastClick;
+			}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+		} else if (typeof module !== 'undefined' && module.exports) {
+			module.exports = FastClick.attach;
+			module.exports.FastClick = FastClick;
+		} else {
+			window.FastClick = FastClick;
+		}
+	}());
+
+
+/***/ },
+/* 5 */
 /***/ function(module, exports) {
 
-	"use strict";
+	'use strict';
 	
 	exports.__esModule = true;
 	var Utils = {
@@ -919,22 +2005,74 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    daysInMonth: function daysInMonth(month, year) {
 	        return new Date(year, month, 0).getDate();
+	    },
+	    /**
+	     * 对Date的扩展，将 Date 转化为指定格式的String
+	     * 月(M)、日(d)、12小时(h)、24小时(H)、分(m)、秒(s)、周(E)、季度(q) 可以用 1-2 个占位符
+	     * 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)
+	     * eg:
+	     * (new Date()).pattern('yyyy-MM-dd hh:mm:ss.S') ==> 2007-07-02 08:09:04.423
+	     * (new Date()).pattern('yyyy-MM-dd E HH:mm:ss') ==> 2007-03-10 二 20:09:04
+	     * (new Date()).pattern('yyyy-MM-dd EE hh:mm:ss') ==> 2007-03-10 周二 08:09:04
+	     * (new Date()).pattern('yyyy-MM-dd EEE hh:mm:ss') ==> 2007-03-10 星期二 08:09:04
+	     * (new Date()).pattern('yyyy-M-d h:m:s.S') ==> 2007-7-2 8:9:4.18
+	     */
+	    dateFormat: function dateFormat(date, fmt) {
+	        if (!this.checkType(date, 'date')) return '';
+	        var o = {
+	            'M+': date.getMonth() + 1,
+	            //月份
+	            'd+': date.getDate(),
+	            //日
+	            'h+': date.getHours() % 12 == 0 ? 12 : date.getHours() % 12,
+	            //小时
+	            'H+': date.getHours(),
+	            //小时
+	            'm+': date.getMinutes(),
+	            //分
+	            's+': date.getSeconds(),
+	            //秒
+	            'q+': Math.floor((date.getMonth() + 3) / 3),
+	            //季度
+	            'S': date.getMilliseconds() //毫秒
+	        };
+	        var week = {
+	            '0': '日',
+	            '1': '一',
+	            '2': '二',
+	            '3': '三',
+	            '4': '四',
+	            '5': '五',
+	            '6': '六'
+	        };
+	        if (/(y+)/.test(fmt)) {
+	            fmt = fmt.replace(RegExp.$1, (date.getFullYear() + '').substr(4 - RegExp.$1.length));
+	        }
+	        if (/(E+)/.test(fmt)) {
+	            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length > 1 ? RegExp.$1.length > 2 ? '星期' : '周' : '') + week[date.getDay() + '']);
+	        }
+	        for (var k in o) {
+	            if (new RegExp('(' + k + ')').test(fmt)) {
+	                fmt = fmt.replace(RegExp.$1, RegExp.$1.length == 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length));
+	            }
+	        }
+	        return fmt;
 	    }
 	};
-	exports["default"] = Utils;
-	module.exports = exports["default"];
+	exports['default'] = Utils;
+	module.exports = exports['default'];
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(6);
+	var content = __webpack_require__(7);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(8)(content, {});
+	var update = __webpack_require__(9)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -951,21 +2089,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(7)();
+	exports = module.exports = __webpack_require__(8)();
 	// imports
 	
 	
 	// module
-	exports.push([module.id, "html {\n  touch-action: manipulation;\n}\nbody {\n  padding: 0;\n  margin: 0;\n}\n.ph-c-clearfix:before,\n.ph-c-clearfix:after {\n  display: table;\n  content: \" \";\n}\n.ph-c-clearfix:after {\n  clear: both;\n}\n.ph-c-container {\n  padding-top: 26px;\n}\n.ph-c-container ul {\n  margin: 0;\n  padding-left: 0;\n  list-style: none;\n}\n.ph-c-container p {\n  margin: 0;\n}\n.ph-c-container .ph-c-top-panel-layer {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  background: rgba(0, 0, 0, 0.4);\n  z-index: 0;\n}\n.ph-c-container .ph-c-header-fixed {\n  box-shadow: inset 0px 3px 1px -3px rgba(115, 115, 115, 0.75);\n  position: fixed;\n  width: 100%;\n  top: 0;\n  background: #fff;\n  z-index: 1000;\n}\n.ph-c-container .ph-c-header-fixed .ph-c-week-label {\n  height: 25px;\n  box-shadow: 0px -1px 9px -1px rgba(115, 115, 115, 0.75);\n}\n.ph-c-container .ph-c-header-fixed .ph-c-week-label p {\n  display: inline-block;\n  width: 14.285%;\n  text-align: center;\n  font-size: 13px;\n}\n.ph-c-container .ph-c-header-fixed .ph-c-date {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n.ph-c-container .ph-c-header-fixed .ph-c-date p {\n  height: 25px;\n  text-align: center;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-title {\n  font-size: 15px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container {\n  font-size: 13px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container .ph-c-top-panel-content .item {\n  float: left;\n  width: 25%;\n  text-align: center;\n  padding-top: 3px;\n  padding-bottom: 3px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container .ph-c-top-panel-content .item .active {\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content-wrap {\n  position: fixed;\n  top: 70px;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  overflow: auto;\n  z-index: 0;\n}\n.ph-c-container .ph-c-content .ph-c-month {\n  overflow: hidden;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-title {\n  text-align: center;\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-title p {\n  height: 25px;\n  color: #111;\n  font-size: 15px;\n}\n.ph-c-container .ph-c-content .ph-c-month:first-child .ph-c-month-title {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table {\n  table-layout: fixed;\n  width: 100%;\n  text-align: center;\n  border-collapse: collapse;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td {\n  height: 60px;\n  border: 1px solid #E1E1E1;\n  font-size: 15px;\n  vertical-align: top;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .day {\n  margin-top: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .event {\n  position: relative;\n  color: #FD0000;\n  margin-top: 5px;\n  font-size: 8px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .event:before {\n  content: ' ';\n  position: absolute;\n  width: 4px;\n  height: 4px;\n  border-radius: 4px;\n  left: 50%;\n  margin-left: -2px;\n  margin-top: 3px;\n  top: -6px;\n  background-color: #FD0000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .choose {\n  margin-top: 5px;\n  font-size: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td:first-child {\n  border-left-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td:last-child {\n  border-right-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_pre .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_next .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_pre .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_next .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_pre .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_next .event {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_current {\n  color: #000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-end,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-start,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-one {\n  background: #FF6633;\n  color: #ffffff;\n  border-color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-end .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-start .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-one .event {\n  color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-end .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-start .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-one .event:before {\n  background-color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-between {\n  background: #FFD3C6;\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled {\n  color: #cccccc;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled .event {\n  color: #cccccc;\n}\n", ""]);
+	exports.push([module.id, "html {\n  touch-action: manipulation;\n}\nbody {\n  padding: 0;\n  margin: 0;\n}\n.ph-c-clearfix:before,\n.ph-c-clearfix:after {\n  display: table;\n  content: \" \";\n}\n.ph-c-clearfix:after {\n  clear: both;\n}\n.ph-c-container {\n  padding-top: 70px;\n}\n.ph-c-container ul {\n  margin: 0;\n  padding-left: 0;\n  list-style: none;\n}\n.ph-c-container p {\n  margin: 0;\n}\n.ph-c-container .ph-c-top-panel-layer {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  background: rgba(0, 0, 0, 0.4);\n  z-index: 0;\n}\n.ph-c-container .ph-c-header-fixed {\n  box-shadow: inset 0px 3px 1px -3px rgba(115, 115, 115, 0.75);\n  position: fixed;\n  width: 100%;\n  top: 0;\n  background: #fff;\n  z-index: 1000;\n}\n.ph-c-container .ph-c-header-fixed .ph-c-week-label {\n  height: 25px;\n  box-shadow: 0px -1px 9px -1px rgba(115, 115, 115, 0.75);\n}\n.ph-c-container .ph-c-header-fixed .ph-c-week-label p {\n  display: inline-block;\n  width: 14.285%;\n  text-align: center;\n  font-size: 13px;\n}\n.ph-c-container .ph-c-header-fixed .ph-c-date {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n.ph-c-container .ph-c-header-fixed .ph-c-date p {\n  height: 25px;\n  text-align: center;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-title {\n  font-size: 15px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container {\n  font-size: 13px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container .ph-c-top-panel-content .item {\n  float: left;\n  width: 25%;\n  text-align: center;\n  padding-top: 3px;\n  padding-bottom: 3px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container .ph-c-top-panel-content .item .active {\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month {\n  overflow: hidden;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-title {\n  text-align: center;\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-title p {\n  height: 25px;\n  color: #111;\n  font-size: 15px;\n}\n.ph-c-container .ph-c-content .ph-c-month:first-child .ph-c-month-title {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week {\n  border-top: 1px solid #E1E1E1;\n  margin-right: -1px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li {\n  float: left;\n  width: 14.285%;\n  height: 60px;\n  text-align: center;\n  border: 1px solid transparent;\n  border-right-color: #E1E1E1;\n  border-bottom-color: #E1E1E1;\n  box-sizing: border-box;\n  font-size: 15px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .day {\n  margin-top: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .event {\n  position: relative;\n  color: #FD0000;\n  margin-top: 5px;\n  font-size: 8px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .event:before {\n  content: ' ';\n  position: absolute;\n  width: 4px;\n  height: 4px;\n  border-radius: 4px;\n  left: 50%;\n  margin-left: -2px;\n  margin-top: 3px;\n  top: -6px;\n  background-color: #FD0000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .choose {\n  margin-top: 5px;\n  font-size: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li:first-child {\n  border-left-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li:last-child {\n  border-right-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_pre .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_next .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_pre .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_next .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_pre .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_next .event {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_current {\n  color: #000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-end,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-start,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-one {\n  background: #FF6633;\n  color: #ffffff;\n  border-color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-end .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-start .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-one .event {\n  color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-end .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-start .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-one .event:before {\n  background-color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-between {\n  background: #FFD3C6;\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled {\n  color: #cccccc;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled .event {\n  color: #cccccc;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table {\n  table-layout: fixed;\n  width: 100%;\n  text-align: center;\n  border-collapse: collapse;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td {\n  height: 60px;\n  border: 1px solid #E1E1E1;\n  font-size: 15px;\n  vertical-align: top;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .day {\n  margin-top: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .event {\n  position: relative;\n  color: #FD0000;\n  margin-top: 5px;\n  font-size: 8px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .event:before {\n  content: ' ';\n  position: absolute;\n  width: 4px;\n  height: 4px;\n  border-radius: 4px;\n  left: 50%;\n  margin-left: -2px;\n  margin-top: 3px;\n  top: -6px;\n  background-color: #FD0000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .choose {\n  margin-top: 5px;\n  font-size: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td:first-child {\n  border-left-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td:last-child {\n  border-right-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_pre .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_next .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_pre .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_next .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_pre .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_next .event {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_current {\n  color: #000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-end,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-start,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-one {\n  background: #FF6633;\n  color: #ffffff;\n  border-color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-end .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-start .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-one .event {\n  color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-end .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-start .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-one .event:before {\n  background-color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-between {\n  background: #FFD3C6;\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled {\n  color: #cccccc;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled .event {\n  color: #cccccc;\n}\n", ""]);
 	
 	// exports
 
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports) {
 
 	/*
@@ -1021,7 +2159,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*

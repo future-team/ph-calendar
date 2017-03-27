@@ -1,15 +1,15 @@
 import React, {Component, PropTypes} from 'react'
-
+import * as fastclick from 'fastclick'
 export default class TopPanel extends Component {
     static propTypes = {
         date: PropTypes.object,
         dateChanged: PropTypes.func,
-        changeDate: PropTypes.bool
+        titleClick: PropTypes.func
     }
     static defaultProps = {
         date: new Date(),
-        changeDate: false,
-        dateChanged: function(){}
+        dateChanged: function(){},
+        titleClick: function(){}
     }
     constructor(props, context) {
         super(props, context)
@@ -18,17 +18,19 @@ export default class TopPanel extends Component {
         const years = this.getYears(year)
         this.state = {
             date: props.date,
-            changeDate: props.changeDate,
-            changeYear: true,
+            changeDate: false,
+            changeYear: false,
             changeMonth: false,
             years: years
         }
     }
+    componentDidMount() {
+        fastclick.attach(document.body)
+    }
     componentWillReceiveProps(nextProps){
         // only update title
         this.setState({
-            date: nextProps.date,
-            changeDate: nextProps.changeDate
+            date: nextProps.date
         })
     }
     onTouchStartHandler(evt) {
@@ -61,6 +63,7 @@ export default class TopPanel extends Component {
         }
     }
     changeMonthHandler(evt){
+        evt.stopPropagation()
         if(this.longTouch !== true) {
             // deal click event
             const month = parseInt(evt.target.closest('.item').dataset.month)
@@ -97,14 +100,16 @@ export default class TopPanel extends Component {
             years: years
         })
     }
-    renderYearSelect(){
+    renderYearSelect(evt){
+        this.props.titleClick(evt)
         this.setState({
             changeDate: true,
             changeYear: true,
             changeMonth: false
         })
     }
-    renderMonthSelect(){
+    renderMonthSelect(evt){
+        this.props.titleClick(evt)
         this.setState({
             changeDate: true,
             changeYear: false,
@@ -119,7 +124,7 @@ export default class TopPanel extends Component {
             return (<p><span
                 onClick={this.renderYearSelect.bind(this)}>{year}</span>年<span
                 onClick={this.renderMonthSelect.bind(this)}>{month+1}</span>月</p>)
-        }else if(changeYear) {
+        }else if(changeYear){
             return (<p><span>{years[0]}年-{years.slice(-1)[0]}年</span></p>)
         }else if(changeMonth) {
             return (<p><span
@@ -136,9 +141,7 @@ export default class TopPanel extends Component {
             // 获取年的范围
             return (<div className="ph-c-top-panel-container"><div
                 className="ph-c-top-panel-content"
-                onTouchStart={::this.onTouchStartHandler}
-                onTouchMove={::this.onTouchMoveHandler}
-                onTouchEnd={::this.changeYearRangeHandler}><ul className="ph-c-clearfix">{
+                onClick={::this.changeYearRangeHandler}><ul className="ph-c-clearfix">{
                 years.map((item, index)=>{
                     return <li key={index} className="item" data-year={item}><div className={ item == year ? 'active' : ''}>{ item }</div></li>
                 })
@@ -146,9 +149,7 @@ export default class TopPanel extends Component {
         }else if(changeMonth) {
             return (<div className="ph-c-top-panel-container"><div
                 className="ph-c-top-panel-content"
-                onTouchStart={::this.onTouchStartHandler}
-                onTouchMove={::this.onTouchMoveHandler}
-                onTouchEnd={::this.changeMonthHandler}
+                onClick={::this.changeMonthHandler}
             ><ul className="ph-c-clearfix">{
                 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((item, index)=>{
                     return <li key={index} className="item" data-month={item}><div className={ item == month ? 'active' : ''}>{ item+1 }月</div></li>
