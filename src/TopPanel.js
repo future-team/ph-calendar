@@ -25,6 +25,7 @@ export default class TopPanel extends Component {
         }
     }
     componentDidMount() {
+        // remove click delay
         fastclick.attach(document.body)
     }
     componentWillReceiveProps(nextProps){
@@ -64,11 +65,9 @@ export default class TopPanel extends Component {
     }
     changeMonthHandler(evt){
         evt.stopPropagation()
-        if(this.longTouch !== true) {
-            // deal click event
-            const month = parseInt(evt.target.closest('.item').dataset.month)
-            this.setItem(month, 'month')
-        }
+        // deal click event
+        const month = parseInt(evt.target.closest('.item').dataset.month)
+        this.setItem(month, 'month')
     }
     getYears(year){
         const startYear = year - 6
@@ -141,7 +140,9 @@ export default class TopPanel extends Component {
             // 获取年的范围
             return (<div className="ph-c-top-panel-container"><div
                 className="ph-c-top-panel-content"
-                onClick={::this.changeYearRangeHandler}><ul className="ph-c-clearfix">{
+                onTouchStart={::this.onTouchStartHandler}
+                onTouchMove={::this.onTouchMoveHandler}
+                onTouchEnd={::this.changeYearRangeHandler}><ul className="ph-c-clearfix">{
                 years.map((item, index)=>{
                     return <li key={index} className="item" data-year={item}><div className={ item == year ? 'active' : ''}>{ item }</div></li>
                 })

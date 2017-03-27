@@ -65,6 +65,8 @@ export default class PhCalendar extends Component {
     constructor(props, context) {
         super(props, context)
         const values = props.values
+        // 标记当前可视的为monthRange的第一个
+        this.currentIndex = 0
         this.screen = window.screen
         const monthRange = this.getMonthRange(this.getCenterDateByValues(values))
         this.state = {
@@ -86,14 +88,11 @@ export default class PhCalendar extends Component {
         })
     }
     componentDidMount() {
-        // 计算每个日历月份的高度，为scroll到当前区域改变当前月份的时间做准备
         this.initTitleDateAndScrollTop()
-
-        if ('addEventListener' in document) {
-            document.addEventListener('scroll', ()=>{
-                this.onScrollHandler()
-            }, false)
-        }
+        document.addEventListener('scroll', ()=>{
+            this.onScrollHandler()
+        }, false)
+        // remove click delay
         fastclick.attach(document.body)
     }
     // event callback
@@ -211,21 +210,22 @@ export default class PhCalendar extends Component {
         })
     }
     /**
-     * 居然出bug了！
      * @param year
      * @param month base on 0, eg: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
      */
     renderMonth(year, month){
         const {weekStart, weekLabel} = this.props
+        const weekLen = weekLabel.length
         const firstDate = new Date(year, month, 1)
         const lastDate = new Date(year, month+1, 0)
         const days = lastDate.getDate()
         const firstDateWeek = firstDate.getDay()
-        let lines = Math.ceil((days+firstDateWeek-weekStart)/weekLabel.length)
+        const blank = (firstDateWeek - weekStart + weekLen)%weekLen
+        const lines = Math.ceil((days+blank)/weekLabel.length)
         const count = lines * weekLabel.length
         let daysArr = []
         let i = 0, dateItem = firstDate
-        dateItem.setDate(1 - firstDateWeek + weekStart)
+        dateItem.setDate(1 - blank)
         while (i < count){
             const date = new Date(dateItem)
             let item = {
@@ -237,10 +237,10 @@ export default class PhCalendar extends Component {
                 month: date.getMonth(),
                 year: date.getFullYear()
             }
-            if(i < firstDateWeek - weekStart) {
+            if(i < blank) {
                 // pre month
                 item.type = 'pre'
-            }else if(i > days + firstDateWeek - weekStart - 1){
+            }else if(i > days+blank-1){
                 // next month
                 item.type = 'next'
             }else{
@@ -322,26 +322,38 @@ export default class PhCalendar extends Component {
      * scroll event be listened for change title date
      */
     onScrollHandler() {
+        const monthDoms = this.monthDOMArr
+        const titleDate = this.state.titleDate
+        // body
+        const scrollTop = window.document.body.scrollTop
+        const len = monthDoms.length
+        const currentIndex = (()=>{
+            for(let i=0; i<len; i++){
+                if(scrollTop < monthDoms[i].offsetBottom) return i
+            }
+        })()
         if(this.timer) {
             window.clearTimeout(this.timer)
         }
         this.timer = setTimeout(()=>{
-            const monthDoms = this.monthDOMArr
-            const titleDate = this.state.titleDate
-            // body
-            const scrollTop = window.document.body.scrollTop
-            const len = monthDoms.length
-            const currentDate = (()=>{
-                for(let i=0; i<len; i++){
-                    if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
-                }
-            })()
+            const currentDate = monthDoms[currentIndex].date
             if(titleDate.toLocaleString() != currentDate.toLocaleString()){
                 this.setState({
                     titleDate: currentDate
                 })
             }
-        }, 50)
+        }, 25)
+        // 持续滚动？
+        if(this.currentIndex !== currentIndex){
+            // direction
+            if(currentIndex == (len-2) || currentIndex == 0){
+                this.continuousUpdateMonth(this.currentIndex, currentIndex)
+            }
+            this.currentIndex = currentIndex
+        }
+    }
+    continuousUpdateMonth(/*curIndex, cacheIndex*/){
+        // todo
     }
     // will delete
     renderDataToUlStyle(year, month){
@@ -428,19 +440,6 @@ export default class PhCalendar extends Component {
             </table>
         )
     }
-    // to title deal
-    renderYearSelect(){
-        this.setState({
-            changeDate: true,
-            layer: true
-        })
-    }
-    renderMonthSelect(){
-        this.setState({
-            changeDate: true,
-            layer: true
-        })
-    }
     /**
      * top panel click chang date callback
      * @param date
@@ -461,25 +460,8 @@ export default class PhCalendar extends Component {
             this.initTitleDateAndScrollTop()
         }, 0)
     }
-    renderTitleContent(){
-        const {titleDate, changeDate} = this.state
-        const year = titleDate.getFullYear()
-        const month = titleDate.getMonth()
-        if(!changeDate) {
-            return (
-                <div className="ph-c-top-panel">
-                    <div className="ph-c-top-panel-title">
-                        <p><span onClick={this.renderYearSelect.bind(this)}>{year}</span>年<span onClick={this.renderMonthSelect.bind(this)}>{month+1}</span>月</p>
-                    </div>
-                </div>
-            )
-        } else {
-            return (<TopPanel date={titleDate} changeDate={changeDate} dateChanged={::this.titleDateChanged}/>)
-        }
-    }
     render(){
         const {weekStart, weekLabel} = this.props
-        const {titleDate} = this.state
         return (
             <div className="ph-c-container">
                 <div className="ph-c-header-fixed">
@@ -490,12 +472,9 @@ export default class PhCalendar extends Component {
                             })
                         }
                     </div>
-                    <div className="ph-c-date">
-                        <TopPanel date={titleDate} dateChanged={::this.titleDateChanged} titleClick={::this.titleClickCallback}/>
-                    </div>
+                    <TopPanel date={this.state.titleDate} dateChanged={::this.titleDateChanged} titleClick={::this.titleClickCallback}/>
                 </div>
-                <div className="ph-c-content"
-                     onClick={::this.onChooseHandler}>
+                <div className="ph-c-content" onClick={::this.onChooseHandler}>
                     {
                         this.state.monthRange.map((monthItem, monthIndex)=>{
                             const year = monthItem.getFullYear()
