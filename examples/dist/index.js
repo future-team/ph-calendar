@@ -19971,9 +19971,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        // 计算每个日历月份的高度，为scroll到当前区域改变当前月份的时间做准备
 	        this.initTitleDateAndScrollTop();
-	        window.document.onscroll = function () {
+	        window.addEventListener('scroll', function () {
 	            _this.onScrollHandler();
-	        };
+	        }, false);
+	        // window.document.onscroll = ()=>{
+	        //     this.onScrollHandler()
+	        // }
 	    };
 	
 	    PhCalendar.prototype.initTitleDateAndScrollTop = function initTitleDateAndScrollTop() {
@@ -20244,9 +20247,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        })();
 	        if (titleDate.toLocaleString() != currentDate.toLocaleString()) {
-	            this.setState({
-	                titleDate: currentDate
-	            });
+	            // this.setState({
+	            //     titleDate: currentDate
+	            // })
 	        }
 	    };
 	
@@ -20538,7 +20541,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            _react2['default'].createElement(
 	                                'div',
 	                                { className: 'ph-c-month-week-container' },
-	                                _this4.renderDataToTableStyle(year, month)
+	                                _this4.renderDataToUlStyle(year, month)
 	                            )
 	                        );
 	                    })

@@ -86,9 +86,12 @@ export default class PhCalendar extends Component {
     componentDidMount() {
         // 计算每个日历月份的高度，为scroll到当前区域改变当前月份的时间做准备
         this.initTitleDateAndScrollTop()
-        window.document.onscroll = ()=>{
+        window.addEventListener('scroll', ()=>{
             this.onScrollHandler()
-        }
+        }, false)
+        // window.document.onscroll = ()=>{
+        //     this.onScrollHandler()
+        // }
     }
     initTitleDateAndScrollTop(){
         const doms = []
@@ -335,9 +338,9 @@ export default class PhCalendar extends Component {
             }
         })()
         if(titleDate.toLocaleString() != currentDate.toLocaleString()){
-            this.setState({
-                titleDate: currentDate
-            })
+            // this.setState({
+            //     titleDate: currentDate
+            // })
         }
     }
     // will delete
@@ -503,7 +506,7 @@ export default class PhCalendar extends Component {
                                         </div>
                                         <div className="ph-c-month-week-container">
                                             {
-                                                this.renderDataToTableStyle(year, month)
+                                                this.renderDataToUlStyle(year, month)
                                             }
                                         </div>
                                     </div>
