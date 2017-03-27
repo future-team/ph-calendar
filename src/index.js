@@ -243,7 +243,7 @@ export default class PhCalendar extends Component {
         })
         setTimeout(()=>{
             this.initTitleDateAndScrollTop()
-        }, 300)
+        }, 0)
     }
     titleClick(){
         // trigger layer
