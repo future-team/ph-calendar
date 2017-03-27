@@ -19912,6 +19912,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            range: _react.PropTypes.bool, // 是否支持范围选择
 	            disabled: _react.PropTypes.array, // 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
 	            values: _react.PropTypes.array,
+	            format: 'yyyy-MM-dd',
 	            events: _react2['default'].PropTypes.arrayOf(_react.PropTypes.shape({
 	                date: _react.PropTypes.object,
 	                name: _react.PropTypes.string,
@@ -19968,7 +19969,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        // 计算每个日历月份的高度，为scroll到当前区域改变当前月份的时间做准备
 	        this.initTitleDateAndScrollTop();
-	
 	        window.document.onscroll = function () {
 	            _this.onScrollHandler();
 	        };
@@ -20240,7 +20240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    PhCalendar.prototype.onTouchEndHandler = function onTouchEndHandler(evt) {
 	        evt.stopPropagation();
-	        if (this.longTouch !== true) {
+	        if (!this.longTouch) {
 	            // deal click event
 	            var dom = evt.target.closest('.day-item');
 	            if (dom && dom.dataset) {
@@ -20260,21 +20260,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    PhCalendar.prototype.onScrollHandler = function onScrollHandler() {
 	        // hhhhh
 	        this.longTouch = true;
-	        // const monthDoms = this.monthDOMArr
-	        // const titleDate = this.state.titleDate
-	        // const scrollTop = this.refs.phContentWrap.scrollTop
-	        // const len = monthDoms.length
-	        // const currentDate = (()=>{
-	        //     for(let i=0; i<len; i++){
-	        //         if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
-	        //     }
-	        // })()
-	        // console.log(scrollTop);
-	        // if(titleDate.toLocaleString() != currentDate.toLocaleString()){
-	        //     this.setState({
-	        //         titleDate: currentDate
-	        //     })
-	        // }
+	        var monthDoms = this.monthDOMArr;
+	        var titleDate = this.state.titleDate;
+	        // body
+	        var scrollTop = window.document.body.scrollTop;
+	        var len = monthDoms.length;
+	        var currentDate = (function () {
+	            for (var i = 0; i < len; i++) {
+	                if (scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date;
+	            }
+	        })();
+	        if (titleDate.toLocaleString() != currentDate.toLocaleString()) {
+	            this.setState({
+	                titleDate: currentDate
+	            });
+	        }
 	    };
 	
 	    // will delete
@@ -20494,7 +20494,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            _react2['default'].createElement(
 	                                'div',
 	                                { className: 'ph-c-month-week-container' },
-	                                _this4.renderDataToUlStyle(year, month)
+	                                _this4.renderDataToTableStyle(year, month)
 	                            )
 	                        );
 	                    })

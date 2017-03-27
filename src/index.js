@@ -42,6 +42,7 @@ export default class PhCalendar extends Component {
         range: PropTypes.bool, // 是否支持范围选择
         disabled: PropTypes.array,// 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
         values: PropTypes.array,
+        format: 'yyyy-MM-dd',
         events: React.PropTypes.arrayOf(PropTypes.shape({
             date: PropTypes.object,
             name: PropTypes.string,
@@ -86,7 +87,6 @@ export default class PhCalendar extends Component {
     componentDidMount() {
         // 计算每个日历月份的高度，为scroll到当前区域改变当前月份的时间做准备
         this.initTitleDateAndScrollTop()
-
         window.document.onscroll = ()=>{
             this.onScrollHandler()
         }
@@ -332,7 +332,7 @@ export default class PhCalendar extends Component {
     }
     onTouchEndHandler(evt){
         evt.stopPropagation()
-        if(this.longTouch !== true) {
+        if(!this.longTouch) {
             // deal click event
             const dom = evt.target.closest('.day-item')
             if(dom && dom.dataset){
@@ -351,21 +351,21 @@ export default class PhCalendar extends Component {
     onScrollHandler() {
         // hhhhh
         this.longTouch = true
-        // const monthDoms = this.monthDOMArr
-        // const titleDate = this.state.titleDate
-        // const scrollTop = this.refs.phContentWrap.scrollTop
-        // const len = monthDoms.length
-        // const currentDate = (()=>{
-        //     for(let i=0; i<len; i++){
-        //         if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
-        //     }
-        // })()
-        // console.log(scrollTop);
-        // if(titleDate.toLocaleString() != currentDate.toLocaleString()){
-        //     this.setState({
-        //         titleDate: currentDate
-        //     })
-        // }
+        const monthDoms = this.monthDOMArr
+        const titleDate = this.state.titleDate
+        // body
+        const scrollTop = window.document.body.scrollTop
+        const len = monthDoms.length
+        const currentDate = (()=>{
+            for(let i=0; i<len; i++){
+                if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
+            }
+        })()
+        if(titleDate.toLocaleString() != currentDate.toLocaleString()){
+            this.setState({
+                titleDate: currentDate
+            })
+        }
     }
     // will delete
     renderDataToUlStyle(year, month){
@@ -485,7 +485,7 @@ export default class PhCalendar extends Component {
                                         </div>
                                         <div className="ph-c-month-week-container">
                                             {
-                                                this.renderDataToUlStyle(year, month)
+                                                this.renderDataToTableStyle(year, month)
                                             }
                                         </div>
                                     </div>
