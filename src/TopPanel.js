@@ -53,6 +53,17 @@ export default class TopPanel extends Component {
             if (absX > clientWidth / 3) {
                 this.setYearRange(this.movex)
             }
+        }else{
+            // deal click event
+            const year = parseInt(evt.target.closest('.item').dataset.year)
+            this.setItem(year, 'year')
+        }
+    }
+    changeMonthHandler(evt){
+        if(this.longTouch !== true) {
+            // deal click event
+            const month = parseInt(evt.target.closest('.item').dataset.month)
+            this.setItem(month, 'month')
         }
     }
     getYears(year){
@@ -130,20 +141,23 @@ export default class TopPanel extends Component {
                 onTouchMove={::this.onTouchMoveHandler}
                 onTouchEnd={::this.changeYearRangeHandler}><ul className="ph-c-clearfix">{
                 years.map((item, index)=>{
-                    return <li key={index} className="item" onClick={this.setItem.bind(this, item, 'year')}><div className={ item == year ? 'active' : ''}>{ item }</div></li>
+                    return <li key={index} className="item" data-year={item}><div className={ item == year ? 'active' : ''}>{ item }</div></li>
                 })
             }</ul></div></div>)
         }else if(changeMonth) {
-            return (<div className="ph-c-top-panel-container"><div className="ph-c-top-panel-content"><ul className="ph-c-clearfix">{
+            return (<div className="ph-c-top-panel-container"><div
+                className="ph-c-top-panel-content"
+                onTouchStart={::this.onTouchStartHandler}
+                onTouchMove={::this.onTouchMoveHandler}
+                onTouchEnd={::this.changeMonthHandler}
+            ><ul className="ph-c-clearfix">{
                 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((item, index)=>{
-                    return <li key={index} className="item" onClick={this.setItem.bind(this, item, 'month')}><div className={ item == month ? 'active' : ''}>{ item+1 }月</div></li>
+                    return <li key={index} className="item" data-month={item}><div className={ item == month ? 'active' : ''}>{ item+1 }月</div></li>
                 })
             }</ul></div></div>)
         }
     }
-    setItem(data, type, evt){
-        evt.stopPropagation()
-        evt.preventDefault()
+    setItem(data, type){
         const date = this.state.date
         if(type == 'year'){
             date.setFullYear(data)

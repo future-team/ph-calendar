@@ -19867,6 +19867,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	__webpack_require__(162);
 	
+	// element-closest | CC0-1.0 | github.com/jonathantneal/closest
+	(function (ElementProto) {
+	    if (typeof ElementProto.matches !== 'function') {
+	        ElementProto.matches = ElementProto.msMatchesSelector || ElementProto.mozMatchesSelector || ElementProto.webkitMatchesSelector || function matches(selector) {
+	            var element = this;
+	            var elements = (element.document || element.ownerDocument).querySelectorAll(selector);
+	            var index = 0;
+	
+	            while (elements[index] && elements[index] !== element) {
+	                ++index;
+	            }
+	
+	            return Boolean(elements[index]);
+	        };
+	    }
+	    if (typeof ElementProto.closest !== 'function') {
+	        ElementProto.closest = function closest(selector) {
+	            var element = this;
+	
+	            while (element && element.nodeType === 1) {
+	                if (element.matches(selector)) {
+	                    return element;
+	                }
+	
+	                element = element.parentNode;
+	            }
+	
+	            return null;
+	        };
+	    }
+	})(window.Element.prototype);
+	
 	var PhCalendar = (function (_Component) {
 	    _inherits(PhCalendar, _Component);
 	
@@ -19917,7 +19949,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            changeDate: false,
 	            changeDateYear: false,
 	            changeDateMonth: false,
-	            titleDate: monthRange[6]
+	            titleDate: monthRange[Math.floor(props.monthCount / 2)]
 	        };
 	    }
 	
@@ -19926,7 +19958,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var monthRange = this.getMonthRange(this.getCenterDateByValues(values));
 	        this.setState({
 	            dateRange: values,
-	            titleDate: monthRange[6],
+	            titleDate: monthRange[Math.floor(nextPros.monthCount / 2)],
 	            monthRange: monthRange
 	        });
 	    };
@@ -19940,6 +19972,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var doms = [];
 	        var monthRange = this.state.monthRange;
 	
+	        var middle = Math.floor(this.props.monthCount / 2);
 	        Array.prototype.forEach.call(document.getElementsByClassName('ph-c-month'), function (item, index) {
 	            var title = item.getElementsByClassName('ph-c-month-title')[0];
 	            doms.push({
@@ -19949,7 +19982,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            });
 	        });
 	        this.monthDOMArr = doms;
-	        this.refs.phContentWrap.scrollTop = doms[6].offsetTitle;
+	        this.refs.phContentWrap.scrollTop = doms[middle].offsetTitle;
 	    };
 	
 	    PhCalendar.prototype.getCenterDateByValues = function getCenterDateByValues(values) {
@@ -19997,24 +20030,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return name;
 	    };
 	
-	    // 渲染12个，一年的，在前后各加减
-	
 	    PhCalendar.prototype.getMonthRange = function getMonthRange(date) {
 	        var month = date.getMonth();
 	        var year = date.getFullYear();
 	        var count = this.props.monthCount;
-	        var start = count / 2 - 1;
-	        var end = count / 2;
+	        var middle = Math.floor(count / 2);
 	        var arr = [];
-	        for (var i = -start; i < end; i++) {
+	        for (var i = -(middle - 1); i < middle; i++) {
 	            arr.push(new Date(year, month + i));
 	        }
 	        return arr;
 	    };
 	
-	    PhCalendar.prototype.chooseDate = function chooseDate(data, evt) {
-	        evt.stopPropagation();
-	        evt.preventDefault();
+	    PhCalendar.prototype.chooseDate = function chooseDate(data) {
 	        var range = this.props.range;
 	
 	        var dateR = this.state.dateRange;
@@ -20155,6 +20183,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	    };
 	
+	    // deal click event
+	
+	    PhCalendar.prototype.onTouchStartHandler = function onTouchStartHandler(evt) {
+	        var _this2 = this;
+	
+	        evt.stopPropagation();
+	        this.longTouch = false;
+	        setTimeout(function () {
+	            _this2.longTouch = true;
+	        }, 200);
+	        this.touchstartx = evt.touches[0].pageX;
+	    };
+	
+	    PhCalendar.prototype.onTouchMoveHandler = function onTouchMoveHandler(evt) {
+	        evt.stopPropagation();
+	        this.touchmovex = evt.touches[0].pageX;
+	        this.movex = this.touchstartx - this.touchmovex;
+	        // deal move
+	    };
+	
+	    PhCalendar.prototype.onTouchEndHandler = function onTouchEndHandler(evt) {
+	        evt.stopPropagation();
+	        if (this.longTouch !== true) {
+	            // deal click event
+	            var dataset = evt.target.closest('.day-item').dataset;
+	            this.chooseDate({
+	                type: dataset.type,
+	                date: new Date(dataset.date)
+	            });
+	        }
+	    };
+	
 	    PhCalendar.prototype.onScrollHandler = function onScrollHandler() {
 	        var monthDoms = this.monthDOMArr;
 	        var titleDate = this.state.titleDate;
@@ -20166,14 +20226,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        })();
 	        if (titleDate.toLocaleString() != currentDate.toLocaleString()) {
-	            /*this.setState({
+	            this.setState({
 	                titleDate: currentDate
-	            })*/
+	            });
 	        }
 	    };
 	
 	    PhCalendar.prototype.renderDataToTableStyle = function renderDataToTableStyle(year, month) {
-	        var _this2 = this;
+	        var _this3 = this;
 	
 	        // group month data
 	        var monthData = this.renderMonth(year, month);
@@ -20211,12 +20271,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        'tr',
 	                        { key: i },
 	                        group.map(function (dayItem, dayIndex) {
-	                            var style = _this2.getDayStyle(dayItem);
-	                            var isDisabled = _this2.checkDisableDate(dayItem.date) ? 'day_disabled' : '';
+	                            var style = _this3.getDayStyle(dayItem);
+	                            var isDisabled = _this3.checkDisableDate(dayItem.date) ? 'day_disabled' : '';
 	                            if (style) {
 	                                return _react2['default'].createElement(
 	                                    'td',
-	                                    { key: dayIndex, onClick: _this2.chooseDate.bind(_this2, dayItem), className: style.className + ' day_status_' + dayItem.type + ' ' + isDisabled },
+	                                    { key: dayIndex, 'data-type': dayItem.type, 'data-date': dayItem.date, className: 'day-item ' + style.className + ' day_status_' + dayItem.type + ' ' + isDisabled },
 	                                    _react2['default'].createElement(
 	                                        'div',
 	                                        null,
@@ -20244,7 +20304,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            } else {
 	                                return _react2['default'].createElement(
 	                                    'td',
-	                                    { key: dayIndex, onClick: _this2.chooseDate.bind(_this2, dayItem), className: 'day_status_' + dayItem.type + ' ' + isDisabled },
+	                                    { key: dayIndex, 'data-type': dayItem.type, 'data-date': dayItem.date, className: 'day-item day_status_' + dayItem.type + ' ' + isDisabled },
 	                                    _react2['default'].createElement(
 	                                        'div',
 	                                        null,
@@ -20273,7 +20333,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    PhCalendar.prototype.render = function render() {
-	        var _this3 = this;
+	        var _this4 = this;
 	
 	        var _props2 = this.props;
 	        var weekStart = _props2.weekStart;
@@ -20304,7 +20364,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            ),
 	            _react2['default'].createElement(
 	                'div',
-	                { className: 'ph-c-content-wrap', ref: 'phContentWrap', onScroll: this.onScrollHandler.bind(this) },
+	                { className: 'ph-c-content-wrap', ref: 'phContentWrap', onScroll: this.onScrollHandler.bind(this),
+	                    onTouchStart: this.onTouchStartHandler.bind(this),
+	                    onTouchMove: this.onTouchMoveHandler.bind(this),
+	                    onTouchEnd: this.onTouchEndHandler.bind(this)
+	                },
 	                _react2['default'].createElement(
 	                    'div',
 	                    { className: 'ph-c-content', ref: 'phContent' },
@@ -20329,7 +20393,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            _react2['default'].createElement(
 	                                'div',
 	                                { className: 'ph-c-month-week-container' },
-	                                _this3.renderDataToTableStyle(year, month)
+	                                _this4.renderDataToTableStyle(year, month)
 	                            )
 	                        );
 	                    })
@@ -20436,6 +20500,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (absX > clientWidth / 3) {
 	                this.setYearRange(this.movex);
 	            }
+	        } else {
+	            // deal click event
+	            var year = parseInt(evt.target.closest('.item').dataset.year);
+	            this.setItem(year, 'year');
+	        }
+	    };
+	
+	    TopPanel.prototype.changeMonthHandler = function changeMonthHandler(evt) {
+	        if (this.longTouch !== true) {
+	            // deal click event
+	            var month = parseInt(evt.target.closest('.item').dataset.month);
+	            this.setItem(month, 'month');
 	        }
 	    };
 	
@@ -20553,8 +20629,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    TopPanel.prototype.renderContent = function renderContent() {
-	        var _this2 = this;
-	
 	        var _state2 = this.state;
 	        var changeDate = _state2.changeDate;
 	        var changeYear = _state2.changeYear;
@@ -20585,7 +20659,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        years.map(function (item, index) {
 	                            return _react2['default'].createElement(
 	                                'li',
-	                                { key: index, className: 'item', onClick: _this2.setItem.bind(_this2, item, 'year') },
+	                                { key: index, className: 'item', 'data-year': item },
 	                                _react2['default'].createElement(
 	                                    'div',
 	                                    { className: item == year ? 'active' : '' },
@@ -20602,14 +20676,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                { className: 'ph-c-top-panel-container' },
 	                _react2['default'].createElement(
 	                    'div',
-	                    { className: 'ph-c-top-panel-content' },
+	                    {
+	                        className: 'ph-c-top-panel-content',
+	                        onTouchStart: this.onTouchStartHandler.bind(this),
+	                        onTouchMove: this.onTouchMoveHandler.bind(this),
+	                        onTouchEnd: this.changeMonthHandler.bind(this)
+	                    },
 	                    _react2['default'].createElement(
 	                        'ul',
 	                        { className: 'ph-c-clearfix' },
 	                        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function (item, index) {
 	                            return _react2['default'].createElement(
 	                                'li',
-	                                { key: index, className: 'item', onClick: _this2.setItem.bind(_this2, item, 'month') },
+	                                { key: index, className: 'item', 'data-month': item },
 	                                _react2['default'].createElement(
 	                                    'div',
 	                                    { className: item == month ? 'active' : '' },
@@ -20624,9 +20703,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	
-	    TopPanel.prototype.setItem = function setItem(data, type, evt) {
-	        evt.stopPropagation();
-	        evt.preventDefault();
+	    TopPanel.prototype.setItem = function setItem(data, type) {
 	        var date = this.state.date;
 	        if (type == 'year') {
 	            date.setFullYear(data);
