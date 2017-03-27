@@ -1,9 +1,9 @@
-import React, {Component, PropTypes} from 'react'
+import React from 'react'
 import ReactDom from 'react/lib/ReactDOM'
 import PhCalendar from '../../src/index.js'
 import './demo.less'
 
-class Demo extends Component {
+class Demo extends React.Component {
     constructor(props, context) {
         super(props, context)
         this.state = {

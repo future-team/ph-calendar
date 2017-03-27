@@ -83,13 +83,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	__webpack_require__(11);
 	
-	var Demo = (function (_Component) {
-	    _inherits(Demo, _Component);
+	var Demo = (function (_React$Component) {
+	    _inherits(Demo, _React$Component);
 	
 	    function Demo(props, context) {
 	        _classCallCheck(this, Demo);
 	
-	        _Component.call(this, props, context);
+	        _React$Component.call(this, props, context);
 	        this.state = {
 	            values: [new Date(2017, 1, 24), new Date(2017, 2, 10)],
 	            disabled: [new Date(2017, 2, 14), new Date(2017, 2, 17)], // start end 包括
@@ -150,7 +150,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    return Demo;
-	})(_react.Component);
+	})(_react2['default'].Component);
 	
 	_reactLibReactDOM2['default'].render(_react2['default'].createElement(Demo, null), document.getElementById('root'));
 
