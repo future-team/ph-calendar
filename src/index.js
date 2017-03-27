@@ -49,7 +49,7 @@ export default class PhCalendar extends Component {
         }))
     }
     static defaultProps = {
-        monthCount: 10, // 渲染头部年月的前后一年的时间
+        monthCount: 12, // 渲染头部年月的前后一年的时间
         weekStart: 1,
         weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
         range: true,
@@ -86,6 +86,10 @@ export default class PhCalendar extends Component {
     componentDidMount() {
         // 计算每个日历月份的高度，为scroll到当前区域改变当前月份的时间做准备
         this.initTitleDateAndScrollTop()
+
+        window.document.onscroll = ()=>{
+            this.onScrollHandler()
+        }
     }
     initTitleDateAndScrollTop(){
         const doms = []
@@ -347,20 +351,21 @@ export default class PhCalendar extends Component {
     onScrollHandler() {
         // hhhhh
         this.longTouch = true
-        /*const monthDoms = this.monthDOMArr
-        const titleDate = this.state.titleDate
-        const scrollTop = this.refs.phContentWrap.scrollTop
-        const len = monthDoms.length
-        const currentDate = (()=>{
-            for(let i=0; i<len; i++){
-                if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
-            }
-        })()
-        if(titleDate.toLocaleString() != currentDate.toLocaleString()){
-            this.setState({
-                titleDate: currentDate
-            })
-        }*/
+        // const monthDoms = this.monthDOMArr
+        // const titleDate = this.state.titleDate
+        // const scrollTop = this.refs.phContentWrap.scrollTop
+        // const len = monthDoms.length
+        // const currentDate = (()=>{
+        //     for(let i=0; i<len; i++){
+        //         if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
+        //     }
+        // })()
+        // console.log(scrollTop);
+        // if(titleDate.toLocaleString() != currentDate.toLocaleString()){
+        //     this.setState({
+        //         titleDate: currentDate
+        //     })
+        // }
     }
     // will delete
     renderDataToUlStyle(year, month){
@@ -464,7 +469,6 @@ export default class PhCalendar extends Component {
                     </div>
                 </div>
                 <div className="ph-c-content-wrap" ref="phContentWrap"
-                     onScroll={::this.onScrollHandler}
                      onTouchStart={::this.onTouchStartHandler}
                      onTouchMove={::this.onTouchMoveHandler}
                      onTouchEnd={::this.onTouchEndHandler}
@@ -481,7 +485,7 @@ export default class PhCalendar extends Component {
                                         </div>
                                         <div className="ph-c-month-week-container">
                                             {
-                                                this.renderDataToTableStyle(year, month)
+                                                this.renderDataToUlStyle(year, month)
                                             }
                                         </div>
                                     </div>
