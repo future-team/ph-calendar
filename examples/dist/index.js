@@ -19890,7 +19890,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'defaultProps',
 	        value: {
-	            monthCount: 12, // 渲染头部年月的前后一年的时间
+	            monthCount: 6, // 渲染头部年月的前后一年的时间
 	            weekStart: 1,
 	            weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
 	            range: true,
@@ -20002,8 +20002,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    PhCalendar.prototype.getMonthRange = function getMonthRange(date) {
 	        var month = date.getMonth();
 	        var year = date.getFullYear();
+	        var count = this.props.monthCount;
+	        var start = count / 2 - 1;
+	        var end = count / 2;
 	        var arr = [];
-	        for (var i = -5; i < 6; i++) {
+	        for (var i = -start; i < end; i++) {
 	            arr.push(new Date(year, month + i));
 	        }
 	        return arr;

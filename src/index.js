@@ -19,7 +19,7 @@ export default class PhCalendar extends Component {
         }))
     }
     static defaultProps = {
-        monthCount: 12, // 渲染头部年月的前后一年的时间
+        monthCount: 6, // 渲染头部年月的前后一年的时间
         weekStart: 1,
         weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
         range: true,
@@ -116,8 +116,11 @@ export default class PhCalendar extends Component {
     getMonthRange(date){
         let month = date.getMonth()
         const year = date.getFullYear()
+        const count = this.props.monthCount
+        const start = count/2-1
+        const end = count/2
         let arr = []
-        for(let i = -5; i < 6; i++){
+        for(let i = -start; i < end; i++){
             arr.push(new Date(year, month+i))
         }
         return arr
