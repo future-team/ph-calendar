@@ -381,9 +381,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        })();
 	        if (titleDate.toLocaleString() != currentDate.toLocaleString()) {
-	            this.setState({
-	                titleDate: currentDate
-	            });
+	            // this.setState({
+	            //     titleDate: currentDate
+	            // })
 	        }
 	    };
 	
