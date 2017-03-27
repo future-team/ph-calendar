@@ -394,7 +394,7 @@ export default class PhCalendar extends Component {
                         <TopPanel date={this.state.titleDate} dateChanged={::this.titleDateChanged} titleClick={::this.titleClick}/>
                     </div>
                 </div>
-                <div className="ph-c-content-wrap" ref="phContentWrap" onScroll={::this.onScrollHandler}
+                <div className="ph-c-content-wrap" ref="phContentWrap"
                      onTouchStart={::this.onTouchStartHandler}
                      onTouchMove={::this.onTouchMoveHandler}
                      onTouchEnd={::this.onTouchEndHandler}

@@ -20364,7 +20364,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            ),
 	            _react2['default'].createElement(
 	                'div',
-	                { className: 'ph-c-content-wrap', ref: 'phContentWrap', onScroll: this.onScrollHandler.bind(this),
+	                { className: 'ph-c-content-wrap', ref: 'phContentWrap',
 	                    onTouchStart: this.onTouchStartHandler.bind(this),
 	                    onTouchMove: this.onTouchMoveHandler.bind(this),
 	                    onTouchEnd: this.onTouchEndHandler.bind(this)
