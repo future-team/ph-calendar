@@ -312,7 +312,7 @@ export default class PhCalendar extends Component {
         this.longTouch = false
         setTimeout(()=>{
             this.longTouch = true
-        }, 200)
+        }, 100)
     }
     onTouchMoveHandler(evt) {
         evt.stopPropagation()
@@ -455,6 +455,7 @@ export default class PhCalendar extends Component {
                      onTouchStart={::this.onTouchStartHandler}
                      onTouchMove={::this.onTouchMoveHandler}
                      onTouchEnd={::this.onTouchEndHandler}
+                     onScroll={::this.onScrollHandler}
                 >
                     <div className="ph-c-content" ref="phContent">
                         {
