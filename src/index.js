@@ -262,9 +262,9 @@ export default class PhCalendar extends Component {
             }
         })()
         if(titleDate.toLocaleString() != currentDate.toLocaleString()){
-            this.setState({
+            /*this.setState({
                 titleDate: currentDate
-            })
+            })*/
         }
     }
     renderDataToTableStyle(year, month){
