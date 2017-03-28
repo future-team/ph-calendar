@@ -10,7 +10,7 @@ class Demo extends Component {
             values: [new Date(2017, 1, 24), new Date(2017, 2, 10)],
             disabled: [new Date(2017, 2, 14), new Date(2017, 2, 17), new Date(2017, 2, 3)],// start end 包括
             weekStart: 1,
-            monthCount: 10,
+            monthCount: 6,
             range: true,
             //weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             events: [
