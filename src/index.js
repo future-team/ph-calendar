@@ -354,7 +354,6 @@ export default class PhCalendar extends Component {
     continuousUpdateMonth(/*curIndex, cacheIndex*/){
         // todo
     }
-    // will delete
     renderDataToUlStyle(year, month){
         const range = this.props.range
         return (
@@ -367,7 +366,7 @@ export default class PhCalendar extends Component {
                             return (
                                 <li key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item ' + style.className + ' day_status_'+ dayItem.type  + ' ' + isDisabled}>
                                     <div className="day">{dayItem.day}</div>
-                                    {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
+                                    {dayItem.event && <div className="event"><p>{(range && style.type != 0)? '': dayItem.event}</p></div>}
                                     {range && <div className="choose">{style.type == 0 ? '': (style.type == -1?'开始':'结束')}</div>}
                                 </li>
                             )
