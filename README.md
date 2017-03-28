@@ -63,7 +63,7 @@ class Demo extends Component {
 }
 ```
 
-# Documentation
+# Options
 
 支持的属性配置：
 - `values` : 日期对象数组，设置日历的选中日期，默认为空数组。 eg: 时间范围：`[new Date(2017, 1, 24), new Date(2017, 2, 10)]`    
@@ -77,7 +77,18 @@ class Demo extends Component {
 - `events`：对象数组，设置日历事件显示，默认为空数组。对象的格式为 `{'date': [Date Object], 'name': [String Object]}`,eg： `[{'date': new Date(2016, 4, 1), 'name': '劳动节'}]`
 
 # Example
+效果图如下：![snapshot](./examples/snapshot.png)      
+在线效果请看 [ph-calendar](https://future-team.github.io/ph-calendar/examples/index.html)       
+详细请参见`examples` 目录下 demo，更改对应参数查看效果，具体步骤参见下面 `Command`     
 
 # Command
-
+```bash
+# clone 代码仓库
+$ git clone https://github.com/future-team/ph-calendar.git && cd ph-calendar
+# 安装依赖
+$ npm install 
+# 查看demo
+$ npm run demo 
+```
 # Repair
+- 0.1.0 第一版本发布

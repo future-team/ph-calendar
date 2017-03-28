@@ -34,6 +34,34 @@ import * as fastclick from 'fastclick'
         }
     }
 })(window.Element.prototype)
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
+// MIT license
+;(function() {
+    var lastTime = 0
+    var vendors = ['ms', 'moz', 'webkit', 'o']
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame']
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+            || window[vendors[x]+'CancelRequestAnimationFrame']
+    }
+
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback) {
+            var currTime = new Date().getTime()
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime))
+            var id = window.setTimeout(function() { callback(currTime + timeToCall) },
+                timeToCall)
+            lastTime = currTime + timeToCall
+            return id
+        }
+
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id)
+        }
+}())
 export default class PhCalendar extends Component {
     static propTypes = {
         monthCount: PropTypes.number,
@@ -89,7 +117,7 @@ export default class PhCalendar extends Component {
         }, false)
         // remove click delay
         fastclick.attach(document.body)
-        setTimeout(()=>{
+        requestAnimationFrame(()=>{
             this.initTitleDateAndScrollTop()
         })
     }
@@ -214,7 +242,7 @@ export default class PhCalendar extends Component {
             dateRange: dateR
         })
         if(!range || dateR.length == 2){
-            setTimeout(()=>{
+            requestAnimationFrame(()=>{
                 this.dataChoseCallback()
             })
         }
@@ -339,9 +367,9 @@ export default class PhCalendar extends Component {
      */
     onScrollHandler() {
         if(this.timer) {
-            clearTimeout(this.timer)
+            cancelAnimationFrame(this.timer)
         }
-        this.timer = setTimeout(()=>{
+        this.timer = requestAnimationFrame(()=>{
             const monthDoms = this.monthDOMArr
             const titleDate = this.state.titleDate
             // body
@@ -400,9 +428,9 @@ export default class PhCalendar extends Component {
             monthRange: this.getMonthRange(date),
             layer: false
         })
-        setTimeout(()=>{
+        requestAnimationFrame(()=>{
             this.initTitleDateAndScrollTop()
-        }, 0)
+        })
     }
     render(){
         const {weekStart, weekLabel} = this.props
