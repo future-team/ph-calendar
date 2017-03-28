@@ -77,7 +77,8 @@ class Demo extends Component {
 - `events`：对象数组，设置日历事件显示，默认为空数组。对象的格式为 `{'date': [Date Object], 'name': [String Object]}`,eg： `[{'date': new Date(2016, 4, 1), 'name': '劳动节'}]`
 
 # Example
-效果图如下：![snapshot](./examples/snapshot.png  =750x)      
+效果图如下：    
+<img src="./examples/snapshot.png" width="200">      
 在线效果请看 [ph-calendar](https://future-team.github.io/ph-calendar/examples/index.html)       
 详细请参见`examples` 目录下 demo，更改对应参数查看效果，具体步骤参见下面 `Command`     
 
