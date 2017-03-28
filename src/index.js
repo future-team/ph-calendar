@@ -354,7 +354,6 @@ export default class PhCalendar extends Component {
     continuousUpdateMonth(/*curIndex, cacheIndex*/){
         // todo
     }
-    // will delete
     renderDataToUlStyle(year, month){
         const range = this.props.range
         return (
@@ -364,79 +363,18 @@ export default class PhCalendar extends Component {
                         const style = dayItem.status
                         const isDisabled = dayItem.disabled ? 'day_disabled' : ''
                         if(style){
-                            return (
-                                <li key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item ' + style.className + ' day_status_'+ dayItem.type  + ' ' + isDisabled}>
+                            return (<li key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item ' + style.className + ' day_status_'+ dayItem.type  + ' ' + isDisabled}>
                                     <div className="day">{dayItem.day}</div>
-                                    {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
-                                    {range && <div className="choose">{style.type == 0 ? '': (style.type == -1?'开始':'结束')}</div>}
-                                </li>
-                            )
+                                    {dayItem.event && <div className="event"><p>{(range && style.type != 0)? '': dayItem.event}</p></div>}
+                                    {range && <div className="choose">{style.type == 0 ? '': (style.type == -1?'开始':'结束')}</div>}</li>)
                         }else{
-                            return (
-                                <li key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item day_status_'+ dayItem.type   + ' ' + isDisabled}>
+                            return (<li key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item day_status_'+ dayItem.type   + ' ' + isDisabled}>
                                     <div className="day">{dayItem.day}</div>
-                                    {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
-                                </li>
-                            )
+                                    {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}</li>)
                         }
                     })
                 }
             </ul>
-        )
-    }
-    renderDataToTableStyle(year, month){
-        // group month data
-        const monthData = this.renderMonth(year, month)
-        const groupLen = this.props.weekLabel.length
-        const range = this.props.range
-        const result = Array.apply(null, {
-            length: Math.ceil(monthData.length / groupLen)
-        }).map((x, i) => {
-            return monthData.slice(i * groupLen, (i + 1) * groupLen)
-        })
-        // render td
-        return (
-            <table className="ph-c-month-week-table" cellSpacing={0} cellPadding={0}>
-                <thead>
-                    <tr><th/><th/><th/><th/><th/><th/><th/></tr>
-                </thead>
-                <tbody>
-                {
-                    result.map((group, i)=>{
-                        return (
-                            <tr key={i}>
-                                {
-                                    group.map((dayItem, dayIndex)=>{
-                                        const style = dayItem.status
-                                        const isDisabled = dayItem.disabled ? 'day_disabled' : ''
-                                        if(style){
-                                            return (
-                                                <td key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item ' + style.className + ' day_status_'+ dayItem.type + ' ' + isDisabled}>
-                                                    <div>
-                                                        <div className="day">{dayItem.day}</div>
-                                                        {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
-                                                        {range && <div className="choose">{style.type == 0 ? '': (style.type == -1?'开始':'结束')}</div>}
-                                                    </div>
-                                                </td>
-                                            )
-                                        }else{
-                                            return (
-                                                <td key={dayIndex} data-type={dayItem.type} data-date={dayItem.date} className={'day-item day_status_'+ dayItem.type  + ' ' + isDisabled}>
-                                                    <div>
-                                                        <div className="day">{dayItem.day}</div>
-                                                        {dayItem.event && <div className="event"><p>{dayItem.event}</p></div>}
-                                                    </div>
-                                                </td>
-                                            )
-                                        }
-                                    })
-                                }
-                            </tr>
-                        )
-                    })
-                }
-                </tbody>
-            </table>
         )
     }
     /**
@@ -483,11 +421,7 @@ export default class PhCalendar extends Component {
                                     <div className="ph-c-month-title">
                                         <p>{dateFormat(monthItem, 'yyyy年MM月dd日')}</p>
                                     </div>
-                                    <div className="ph-c-month-week-container">
-                                        {
-                                            this.renderDataToUlStyle(year, month)
-                                        }
-                                    </div>
+                                    <div className="ph-c-month-week-container">{this.renderDataToUlStyle(year, month)}</div>
                                 </div>
                             )
                         })

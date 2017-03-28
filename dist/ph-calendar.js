@@ -132,16 +132,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            monthCount: _react.PropTypes.number,
 	            weekStart: _react.PropTypes.number,
 	            weekLabel: _react.PropTypes.array,
-	            dateChose: _react.PropTypes.func,
 	            range: _react.PropTypes.bool, // 是否支持范围选择
 	            disabled: _react.PropTypes.array, // 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
 	            values: _react.PropTypes.array,
 	            format: _react.PropTypes.string,
 	            events: _react2['default'].PropTypes.arrayOf(_react.PropTypes.shape({
 	                date: _react.PropTypes.object,
-	                name: _react.PropTypes.string,
-	                format: _react.PropTypes['function']
-	            }))
+	                name: _react.PropTypes.string
+	            })),
+	            dateChose: _react.PropTypes.func
 	        },
 	        enumerable: true
 	    }, {
@@ -172,10 +171,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.state = {
 	            layer: false,
 	            monthRange: monthRange, // 月份的列表
-	            yearRange: [], // 选择年份的列表
 	            dateRange: values, // 选择日期的范围,如果是只有一个，则默认是单选了
 	            changeDate: false,
-	            titleDate: monthRange[Math.floor(props.monthCount / 2)]
+	            titleDate: monthRange[0]
 	        };
 	    }
 	
@@ -184,7 +182,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var monthRange = this.getMonthRange(this.getCenterDateByValues(values));
 	        this.setState({
 	            dateRange: values,
-	            titleDate: monthRange[Math.floor(nextPros.monthCount / 2)],
+	            titleDate: monthRange[0],
 	            monthRange: monthRange
 	        });
 	    };
@@ -207,7 +205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var dateRange = this.state.dateRange;
 	
-	        dateRange.map(function (item) {
+	        dateRange = dateRange.map(function (item) {
 	            return _utils.dateFormat(item, _this2.props.format);
 	        });
 	        this.props.dateChose(dateRange);
@@ -293,6 +291,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	
 	    PhCalendar.prototype.chooseDate = function chooseDate(data) {
+	        var _this3 = this;
+	
 	        var range = this.props.range;
 	
 	        var dateR = this.state.dateRange;
@@ -302,8 +302,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (!range) {
 	            dateR = [date];
-	            // single choose
-	            this.dataChoseCallback();
 	        } else {
 	            if (dateR.length < 2) {
 	                //compare
@@ -314,8 +312,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    } else {
 	                        dateR.push(date);
 	                    }
-	                    // range choose
-	                    this.dataChoseCallback();
 	                } else {
 	                    dateR.push(date);
 	                }
@@ -326,6 +322,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.setState({
 	            dateRange: dateR
 	        });
+	        if (!range || dateR.length == 2) {
+	            setTimeout(function () {
+	                _this3.dataChoseCallback();
+	            });
+	        }
 	    };
 	
 	    /**
@@ -450,7 +451,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	
 	    PhCalendar.prototype.onScrollHandler = function onScrollHandler() {
-	        var _this3 = this;
+	        var _this4 = this;
 	
 	        var monthDoms = this.monthDOMArr;
 	        var titleDate = this.state.titleDate;
@@ -468,7 +469,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.timer = setTimeout(function () {
 	            var currentDate = monthDoms[currentIndex].date;
 	            if (titleDate.toLocaleString() != currentDate.toLocaleString()) {
-	                _this3.setState({
+	                _this4.setState({
 	                    titleDate: currentDate
 	                });
 	            }
@@ -483,11 +484,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	
-	    PhCalendar.prototype.continuousUpdateMonth = function continuousUpdateMonth() /*curIndex, cacheIndex*/{}
-	    // todo
-	
-	    // will delete
-	    ;
+	    PhCalendar.prototype.continuousUpdateMonth = function continuousUpdateMonth() /*curIndex, cacheIndex*/{
+	        // todo
+	    };
 	
 	    PhCalendar.prototype.renderDataToUlStyle = function renderDataToUlStyle(year, month) {
 	        var range = this.props.range;
@@ -512,7 +511,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            _react2['default'].createElement(
 	                                'p',
 	                                null,
-	                                dayItem.event
+	                                range && style.type != 0 ? '' : dayItem.event
 	                            )
 	                        ),
 	                        range && _react2['default'].createElement(
@@ -545,104 +544,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        );
 	    };
 	
-	    PhCalendar.prototype.renderDataToTableStyle = function renderDataToTableStyle(year, month) {
-	        // group month data
-	        var monthData = this.renderMonth(year, month);
-	        var groupLen = this.props.weekLabel.length;
-	        var range = this.props.range;
-	        var result = Array.apply(null, {
-	            length: Math.ceil(monthData.length / groupLen)
-	        }).map(function (x, i) {
-	            return monthData.slice(i * groupLen, (i + 1) * groupLen);
-	        });
-	        // render td
-	        return _react2['default'].createElement(
-	            'table',
-	            { className: 'ph-c-month-week-table', cellSpacing: 0, cellPadding: 0 },
-	            _react2['default'].createElement(
-	                'thead',
-	                null,
-	                _react2['default'].createElement(
-	                    'tr',
-	                    null,
-	                    _react2['default'].createElement('th', null),
-	                    _react2['default'].createElement('th', null),
-	                    _react2['default'].createElement('th', null),
-	                    _react2['default'].createElement('th', null),
-	                    _react2['default'].createElement('th', null),
-	                    _react2['default'].createElement('th', null),
-	                    _react2['default'].createElement('th', null)
-	                )
-	            ),
-	            _react2['default'].createElement(
-	                'tbody',
-	                null,
-	                result.map(function (group, i) {
-	                    return _react2['default'].createElement(
-	                        'tr',
-	                        { key: i },
-	                        group.map(function (dayItem, dayIndex) {
-	                            var style = dayItem.status;
-	                            var isDisabled = dayItem.disabled ? 'day_disabled' : '';
-	                            if (style) {
-	                                return _react2['default'].createElement(
-	                                    'td',
-	                                    { key: dayIndex, 'data-type': dayItem.type, 'data-date': dayItem.date, className: 'day-item ' + style.className + ' day_status_' + dayItem.type + ' ' + isDisabled },
-	                                    _react2['default'].createElement(
-	                                        'div',
-	                                        null,
-	                                        _react2['default'].createElement(
-	                                            'div',
-	                                            { className: 'day' },
-	                                            dayItem.day
-	                                        ),
-	                                        dayItem.event && _react2['default'].createElement(
-	                                            'div',
-	                                            { className: 'event' },
-	                                            _react2['default'].createElement(
-	                                                'p',
-	                                                null,
-	                                                dayItem.event
-	                                            )
-	                                        ),
-	                                        range && _react2['default'].createElement(
-	                                            'div',
-	                                            { className: 'choose' },
-	                                            style.type == 0 ? '' : style.type == -1 ? '开始' : '结束'
-	                                        )
-	                                    )
-	                                );
-	                            } else {
-	                                return _react2['default'].createElement(
-	                                    'td',
-	                                    { key: dayIndex, 'data-type': dayItem.type, 'data-date': dayItem.date, className: 'day-item day_status_' + dayItem.type + ' ' + isDisabled },
-	                                    _react2['default'].createElement(
-	                                        'div',
-	                                        null,
-	                                        _react2['default'].createElement(
-	                                            'div',
-	                                            { className: 'day' },
-	                                            dayItem.day
-	                                        ),
-	                                        dayItem.event && _react2['default'].createElement(
-	                                            'div',
-	                                            { className: 'event' },
-	                                            _react2['default'].createElement(
-	                                                'p',
-	                                                null,
-	                                                dayItem.event
-	                                            )
-	                                        )
-	                                    )
-	                                );
-	                            }
-	                        })
-	                    );
-	                })
-	            )
-	        );
-	    };
-	
 	    /**
 	     * top panel click chang date callback
 	     * @param date
@@ -656,7 +557,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    PhCalendar.prototype.titleDateChanged = function titleDateChanged(date) {
-	        var _this4 = this;
+	        var _this5 = this;
 	
 	        this.setState({
 	            changeDate: false,
@@ -664,12 +565,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            layer: false
 	        });
 	        setTimeout(function () {
-	            _this4.initTitleDateAndScrollTop();
+	            _this5.initTitleDateAndScrollTop();
 	        }, 0);
 	    };
 	
 	    PhCalendar.prototype.render = function render() {
-	        var _this5 = this;
+	        var _this6 = this;
 	
 	        var _props2 = this.props;
 	        var weekStart = _props2.weekStart;
@@ -709,16 +610,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            _react2['default'].createElement(
 	                                'p',
 	                                null,
-	                                year,
-	                                '年',
-	                                month + 1,
-	                                '月'
+	                                _utils.dateFormat(monthItem, 'yyyy年MM月dd日')
 	                            )
 	                        ),
 	                        _react2['default'].createElement(
 	                            'div',
 	                            { className: 'ph-c-month-week-container' },
-	                            _this5.renderDataToUlStyle(year, month)
+	                            _this6.renderDataToUlStyle(year, month)
 	                        )
 	                    );
 	                })
@@ -773,7 +671,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: {
 	            date: _react.PropTypes.object,
 	            dateChanged: _react.PropTypes.func,
-	            titleClick: _react.PropTypes.func
+	            titleClick: _react.PropTypes.func,
+	            format: _react.PropTypes.string
 	        },
 	        enumerable: true
 	    }, {
@@ -781,7 +680,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: {
 	            date: new Date(),
 	            dateChanged: function dateChanged() {},
-	            titleClick: function titleClick() {}
+	            titleClick: function titleClick() {},
+	            format: 'yyyy-MM-dd'
 	        },
 	        enumerable: true
 	    }]);
@@ -917,7 +817,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var years = _state.years;
 	
 	        var year = date.getFullYear();
-	        var month = date.getMonth();
+	        var month = date.getMonth() + 1;
+	        month = (month + '').length > 1 ? month : '0' + month;
 	        if (!changeDate) {
 	            // 切换时间 or 月份
 	            return _react2['default'].createElement(
@@ -934,7 +835,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    'span',
 	                    {
 	                        onClick: this.renderMonthSelect.bind(this) },
-	                    month + 1
+	                    month
 	                ),
 	                '月'
 	            );
@@ -962,7 +863,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    year
 	                ),
 	                '年',
-	                month + 1,
+	                month,
 	                '月'
 	            );
 	        }
@@ -2052,7 +1953,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	// module
-	exports.push([module.id, "html {\n  touch-action: manipulation;\n}\nbody {\n  padding: 0;\n  margin: 0;\n}\n.ph-c-clearfix:before,\n.ph-c-clearfix:after {\n  display: table;\n  content: \" \";\n}\n.ph-c-clearfix:after {\n  clear: both;\n}\n.ph-c-container {\n  padding-top: 70px;\n}\n.ph-c-container ul {\n  margin: 0;\n  padding-left: 0;\n  list-style: none;\n}\n.ph-c-container p {\n  margin: 0;\n}\n.ph-c-container .ph-c-top-panel-layer {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  background: rgba(0, 0, 0, 0.4);\n  z-index: 0;\n}\n.ph-c-container .ph-c-header-fixed {\n  box-shadow: inset 0px 3px 1px -3px rgba(115, 115, 115, 0.75);\n  position: fixed;\n  width: 100%;\n  top: 0;\n  background: #fff;\n  z-index: 1000;\n}\n.ph-c-container .ph-c-header-fixed .ph-c-week-label {\n  height: 25px;\n  box-shadow: 0px -1px 9px -1px rgba(115, 115, 115, 0.75);\n}\n.ph-c-container .ph-c-header-fixed .ph-c-week-label p {\n  display: inline-block;\n  width: 14.285%;\n  text-align: center;\n  font-size: 13px;\n}\n.ph-c-container .ph-c-top-panel {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n.ph-c-container .ph-c-top-panel p {\n  height: 25px;\n  text-align: center;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-title {\n  font-size: 15px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container {\n  font-size: 13px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container .ph-c-top-panel-content .item {\n  float: left;\n  width: 25%;\n  text-align: center;\n  padding-top: 3px;\n  padding-bottom: 3px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container .ph-c-top-panel-content .item .active {\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month {\n  overflow: hidden;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-title {\n  text-align: center;\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-title p {\n  height: 25px;\n  color: #111;\n  font-size: 15px;\n}\n.ph-c-container .ph-c-content .ph-c-month:first-child .ph-c-month-title {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week {\n  border-top: 1px solid #E1E1E1;\n  margin-right: -1px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li {\n  float: left;\n  width: 14.285%;\n  height: 60px;\n  text-align: center;\n  border: 1px solid transparent;\n  border-right-color: #E1E1E1;\n  border-bottom-color: #E1E1E1;\n  box-sizing: border-box;\n  font-size: 15px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .day {\n  margin-top: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .event {\n  position: relative;\n  color: #FD0000;\n  margin-top: 5px;\n  font-size: 8px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .event:before {\n  content: ' ';\n  position: absolute;\n  width: 4px;\n  height: 4px;\n  border-radius: 4px;\n  left: 50%;\n  margin-left: -2px;\n  margin-top: 3px;\n  top: -6px;\n  background-color: #FD0000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .choose {\n  margin-top: 5px;\n  font-size: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li:first-child {\n  border-left-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li:last-child {\n  border-right-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_pre .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_next .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_pre .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_next .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_pre .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_next .event {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_current {\n  color: #000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-end,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-start,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-one {\n  background: #FF6633;\n  color: #ffffff;\n  border-color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-end .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-start .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-one .event {\n  color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-end .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-start .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-one .event:before {\n  background-color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-between {\n  background: #FFD3C6;\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled {\n  color: #cccccc;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled .event {\n  color: #cccccc;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table {\n  table-layout: fixed;\n  width: 100%;\n  text-align: center;\n  border-collapse: collapse;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td {\n  height: 60px;\n  border: 1px solid #E1E1E1;\n  font-size: 15px;\n  vertical-align: top;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .day {\n  margin-top: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .event {\n  position: relative;\n  color: #FD0000;\n  margin-top: 5px;\n  font-size: 8px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .event:before {\n  content: ' ';\n  position: absolute;\n  width: 4px;\n  height: 4px;\n  border-radius: 4px;\n  left: 50%;\n  margin-left: -2px;\n  margin-top: 3px;\n  top: -6px;\n  background-color: #FD0000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td .choose {\n  margin-top: 5px;\n  font-size: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td:first-child {\n  border-left-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td:last-child {\n  border-right-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_pre .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_next .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_pre .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_next .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_pre .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_next .event {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_status_current {\n  color: #000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-end,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-start,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-one {\n  background: #FF6633;\n  color: #ffffff;\n  border-color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-end .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-start .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-one .event {\n  color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-end .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-start .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-one .event:before {\n  background-color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.choose-between {\n  background: #FFD3C6;\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled {\n  color: #cccccc;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week-table tr td.day_disabled .event {\n  color: #cccccc;\n}\n", ""]);
+	exports.push([module.id, "html {\n  touch-action: manipulation;\n}\nbody {\n  padding: 0;\n  margin: 0;\n}\n.ph-c-clearfix:before,\n.ph-c-clearfix:after {\n  display: table;\n  content: \" \";\n}\n.ph-c-clearfix:after {\n  clear: both;\n}\n.ph-c-container {\n  padding-top: 70px;\n}\n.ph-c-container ul {\n  margin: 0;\n  padding-left: 0;\n  list-style: none;\n}\n.ph-c-container p {\n  margin: 0;\n}\n.ph-c-container .ph-c-top-panel-layer {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  background: rgba(0, 0, 0, 0.4);\n  z-index: 0;\n}\n.ph-c-container .ph-c-header-fixed {\n  box-shadow: inset 0px 3px 1px -3px rgba(115, 115, 115, 0.75);\n  position: fixed;\n  width: 100%;\n  top: 0;\n  background: #fff;\n  z-index: 1000;\n}\n.ph-c-container .ph-c-header-fixed .ph-c-week-label {\n  height: 25px;\n  box-shadow: 0px -1px 9px -1px rgba(115, 115, 115, 0.75);\n}\n.ph-c-container .ph-c-header-fixed .ph-c-week-label p {\n  display: inline-block;\n  width: 14.285%;\n  text-align: center;\n  font-size: 13px;\n}\n.ph-c-container .ph-c-top-panel {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n.ph-c-container .ph-c-top-panel p {\n  height: 25px;\n  text-align: center;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-title {\n  font-size: 15px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container {\n  font-size: 13px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container .ph-c-top-panel-content .item {\n  float: left;\n  width: 25%;\n  text-align: center;\n  padding-top: 3px;\n  padding-bottom: 3px;\n}\n.ph-c-container .ph-c-top-panel .ph-c-top-panel-container .ph-c-top-panel-content .item .active {\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month {\n  overflow: hidden;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-title {\n  text-align: center;\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-title p {\n  height: 25px;\n  color: #111;\n  font-size: 15px;\n}\n.ph-c-container .ph-c-content .ph-c-month:first-child .ph-c-month-title {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week {\n  border-top: 1px solid #E1E1E1;\n  margin-right: -1px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li {\n  float: left;\n  font-size: 15px;\n  width: 14.285%;\n  height: 60px;\n  text-align: center;\n  border: 1px solid transparent;\n  border-right-color: #E1E1E1;\n  border-bottom-color: #E1E1E1;\n  box-sizing: border-box;\n  overflow: hidden;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .day {\n  margin-top: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .event {\n  position: relative;\n  color: #FD0000;\n  margin-top: 5px;\n  font-size: 8px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .event:before {\n  content: ' ';\n  position: absolute;\n  width: 4px;\n  height: 4px;\n  border-radius: 4px;\n  left: 50%;\n  margin-left: -2px;\n  margin-top: 3px;\n  top: -6px;\n  background-color: #FD0000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li .choose {\n  margin-top: 5px;\n  font-size: 10px;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li:first-child {\n  border-left-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li:last-child {\n  border-right-color: transparent;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_pre .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_next .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_pre .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_next .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_pre .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_next .event {\n  display: none;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_status_current {\n  color: #000;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-end,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-start,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-one {\n  background: #FF6633;\n  color: #ffffff;\n  border-color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-end .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-start .event,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-one .event {\n  color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-end .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-start .event:before,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-one .event:before {\n  background-color: #ffffff;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.choose-between {\n  background: #FFD3C6;\n  color: #FF6633;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled {\n  color: #cccccc;\n}\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled .day,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled .week,\n.ph-c-container .ph-c-content .ph-c-month .ph-c-month-week li.day_disabled .event {\n  color: #cccccc;\n}\n", ""]);
 	
 	// exports
 
