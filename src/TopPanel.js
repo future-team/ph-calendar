@@ -5,14 +5,12 @@ export default class TopPanel extends Component {
     static propTypes = {
         date: PropTypes.object,
         dateChanged: PropTypes.func,
-        titleClick: PropTypes.func,
-        format: PropTypes.string
+        titleClick: PropTypes.func
     }
     static defaultProps = {
         date: new Date(),
         dateChanged: function(){},
-        titleClick: function(){},
-        format: 'yyyy-MM-dd'
+        titleClick: function(){}
     }
     constructor(props, context) {
         super(props, context)

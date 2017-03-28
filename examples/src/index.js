@@ -8,9 +8,9 @@ class Demo extends Component {
         super(props, context)
         this.state = {
             values: [new Date(2017, 1, 24), new Date(2017, 2, 10)],
-            disabled:[new Date(2017, 2, 14), new Date(2017, 2, 17)],// start end 包括
+            disabled: [new Date(2017, 2, 14), new Date(2017, 2, 17), new Date(2017, 2, 3)],// start end 包括
             weekStart: 1,
-            monthCount: 6,
+            monthCount: 10,
             range: true,
             //weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             events: [
@@ -45,19 +45,18 @@ class Demo extends Component {
         return (
             <div className="rcs-demo">
                 <PhCalendar values={values}
-                            dateChose={this.chooseCallback}
-                            disabled={disabled}
-                            events={events}
-                            monthCount={monthCount}
-                            weekStart={weekStart}
-                            weekLabel={weekLabel}
-                            range={range}
+                    dateChose={this.chooseCallback}
+                    disabled={disabled}
+                    events={events}
+                    monthCount={monthCount}
+                    weekStart={weekStart}
+                    weekLabel={weekLabel}
+                    range={range}
                 />
             </div>
         )
     }
 }
-
 ReactDom.render(
     <Demo/>
     , document.getElementById('root')
