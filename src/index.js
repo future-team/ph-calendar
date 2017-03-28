@@ -1,7 +1,7 @@
 import React, {Component, PropTypes} from 'react'
 import TopPanel from './TopPanel'
 import {checkType, dateFormat} from './utils'
-import './less/style.less'
+import '../less/style.less'
 import * as fastclick from 'fastclick'
 // element-closest | CC0-1.0 | github.com/jonathantneal/closest
 (function (ElementProto) {
