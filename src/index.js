@@ -40,16 +40,15 @@ export default class PhCalendar extends Component {
         monthCount: PropTypes.number,
         weekStart: PropTypes.number,
         weekLabel: PropTypes.array,
-        dateChose: PropTypes.func,
         range: PropTypes.bool, // 是否支持范围选择
         disabled: PropTypes.array,// 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
         values: PropTypes.array,
         format: PropTypes.string,
         events: React.PropTypes.arrayOf(PropTypes.shape({
             date: PropTypes.object,
-            name: PropTypes.string,
-            format: PropTypes.function
-        }))
+            name: PropTypes.string
+        })),
+        dateChose: PropTypes.func
     }
     static defaultProps = {
         format: 'yyyy-MM-dd',
@@ -72,10 +71,9 @@ export default class PhCalendar extends Component {
         this.state = {
             layer: false,
             monthRange: monthRange, // 月份的列表
-            yearRange: [], // 选择年份的列表
             dateRange: values, // 选择日期的范围,如果是只有一个，则默认是单选了
             changeDate: false,
-            titleDate: monthRange[Math.floor(props.monthCount/2)]
+            titleDate: monthRange[0]
         }
     }
     componentWillReceiveProps(nextPros) {
@@ -83,7 +81,7 @@ export default class PhCalendar extends Component {
         const monthRange = this.getMonthRange(this.getCenterDateByValues(values))
         this.setState({
             dateRange: values,
-            titleDate: monthRange[Math.floor(nextPros.monthCount/2)],
+            titleDate: monthRange[0],
             monthRange: monthRange
         })
     }
@@ -97,8 +95,8 @@ export default class PhCalendar extends Component {
     }
     // event callback
     dataChoseCallback(){
-        const {dateRange} = this.state
-        dateRange.map((item)=>{
+        let {dateRange} = this.state
+        dateRange = dateRange.map((item)=>{
             return dateFormat(item, this.props.format)
         })
         this.props.dateChose(dateRange)
@@ -184,8 +182,6 @@ export default class PhCalendar extends Component {
         }
         if(!range){
             dateR = [date]
-            // single choose
-            this.dataChoseCallback()
         }else{
             if(dateR.length < 2){
                 //compare
@@ -196,8 +192,6 @@ export default class PhCalendar extends Component {
                     }else{
                         dateR.push(date)
                     }
-                    // range choose
-                    this.dataChoseCallback()
                 }else{
                     dateR.push(date)
                 }
@@ -208,6 +202,11 @@ export default class PhCalendar extends Component {
         this.setState({
             dateRange: dateR
         })
+        if(!range || dateR.length == 2){
+            setTimeout(()=>{
+                this.dataChoseCallback()
+            })
+        }
     }
     /**
      * @param year
@@ -482,7 +481,7 @@ export default class PhCalendar extends Component {
                             return (
                                 <div className="ph-c-month" key={monthIndex}>
                                     <div className="ph-c-month-title">
-                                        <p>{year}年{month+1}月</p>
+                                        <p>{dateFormat(monthItem, 'yyyy年MM月dd日')}</p>
                                     </div>
                                     <div className="ph-c-month-week-container">
                                         {

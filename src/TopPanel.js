@@ -1,15 +1,18 @@
 import React, {Component, PropTypes} from 'react'
 import * as fastclick from 'fastclick'
+
 export default class TopPanel extends Component {
     static propTypes = {
         date: PropTypes.object,
         dateChanged: PropTypes.func,
-        titleClick: PropTypes.func
+        titleClick: PropTypes.func,
+        format: PropTypes.string
     }
     static defaultProps = {
         date: new Date(),
         dateChanged: function(){},
-        titleClick: function(){}
+        titleClick: function(){},
+        format: 'yyyy-MM-dd'
     }
     constructor(props, context) {
         super(props, context)
@@ -118,16 +121,17 @@ export default class TopPanel extends Component {
     renderTitle(){
         const {changeDate, changeYear, changeMonth, date, years} = this.state
         const year = date.getFullYear()
-        const month = date.getMonth()
+        let month = date.getMonth()+1
+        month = (month+'').length > 1 ? month : '0'+month
         if(!changeDate){ // 切换时间 or 月份
             return (<p><span
                 onClick={this.renderYearSelect.bind(this)}>{year}</span>年<span
-                onClick={this.renderMonthSelect.bind(this)}>{month+1}</span>月</p>)
+                onClick={this.renderMonthSelect.bind(this)}>{month}</span>月</p>)
         }else if(changeYear){
             return (<p><span>{years[0]}年-{years.slice(-1)[0]}年</span></p>)
         }else if(changeMonth) {
             return (<p><span
-                onClick={this.renderYearSelect.bind(this)}>{year}</span>年{month+1}月</p>)
+                onClick={this.renderYearSelect.bind(this)}>{year}</span>年{month}月</p>)
         }
     }
     renderContent(){

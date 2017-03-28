@@ -14,18 +14,49 @@ import PhCalendar from 'ph-calendar'
 class Demo extends Component {
     constructor(props, context) {
         super(props, context)
-        this.state = {
-            values: [new Date(2017, 1, 24), new Date(2017, 2, 10)],
-            disabled:[new Date(2017, 2, 14), new Date(2017, 2, 17)],// start end 包括
-        }
+            this.state = {
+                values: [new Date(2017, 1, 24), new Date(2017, 2, 10)],
+                disabled:[new Date(2017, 2, 14), new Date(2017, 2, 17)],// start end 包括
+                weekStart: 1,
+                monthCount: 5,
+                range: true,
+                //weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                events: [
+                    {
+                        date: new Date(2017, 1, 10),
+                        name: '家立减'
+                    },
+                    {
+                        date: new Date(2017, 1, 22),
+                        name: '团购'
+                    },
+                    {
+                        date: new Date(2017, 2, 10),
+                        name: '劳动节'
+                    },
+                    {
+                        date: new Date(2017, 2, 15),
+                        name: '哈哈哈'
+                    }
+                ]
+            }
     }
     chooseCallback(data){
-        console.log('choose date', data)
+        console.log('选择后的日期', data)
     }
     render() {
+        const {values, disabled, weekStart, events, weekLabel, range, monthCount} = this.state
         return (
             <div className="rcs-demo">
-                <PhCalendar values={this.state.values} dateChanged={this.chooseCallback} disabled={this.state.disabled}/>
+                <PhCalendar 
+                    values={values}
+                    dateChose={this.chooseCallback}
+                    disabled={disabled}
+                    events={events}
+                    monthCount={monthCount}
+                    weekStart={weekStart}
+                    weekLabel={weekLabel}
+                    range={range}/>
             </div>
         )
     }
@@ -33,12 +64,19 @@ class Demo extends Component {
 ```
 
 # Documentation
-`values` <Array>: set calendar choose range or date, if set two `Date` that mean should choose range, or only one `Date` mean select     
-`dateChanged` <Function>: set calendar choose range or date, if set two `Date` that mean should choose range, or only one `Date` mean select     
-`disabled` <Array>: set calendar disabled range or date, if set two `Date` that mean disabled range, or mean only disabled some date in this array    
+
+支持的属性配置：
+- `values` : 日期对象数组，设置日历的选中日期，默认为空数组。 eg: 时间范围：`[new Date(2017, 1, 24), new Date(2017, 2, 10)]`    
+- `disabled` ：日期对象数组，设置禁用的日期，默认为空数组。 如果设置的值恰好为 2 个，则表示禁用的是一段日期。传如一个或者三个以上，则表示为单个日期禁用    
+- `dateChose` ：日期选择回调函数，默认为空函数。单个日期模式下，选中一个日期则处罚；日期范围模式下，选中两个日期才触发     
+- `range`：布尔值，设置日历选择日期的模式，默认为 `true`。 `true` 表示范围选择，`false` 表示单选
+- `monthCount`：正整数，设置单页日历的个数，默认为 6。最小值为 3，最大值为 12
+- `weekStart`：非负整数，设置一周的开始时间，默认为 1。取值范围是 `new Date().getDay()` 值的集合，即为 0、 1、 2、 3、 4、 5、 6，分别表示周日、周一、周二、周三、周四、周五、周六
+- `weekLabel`：字符串数组，设置周的显示格式，默认为 ['日', '一', '二', '三', '四', '五', '六']
+- `format`：字符串，设置日期的显示格式，默认为 `yyyy-MM-dd`
+- `events`：对象数组，设置日历事件显示，默认为空数组。对象的格式为 `{'date': [Date Object], 'name': [String Object]}`,eg： `[{'date': new Date(2016, 4, 1), 'name': '劳动节'}]`
 
 # Example
-
 
 # Command
 
