@@ -20,6 +20,7 @@ class Demo extends Component {
                 weekStart: 1,
                 monthCount: 5,
                 range: true,
+                monthStart: 'top', //['top', 'center', 'bottom']
                 //weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
                 events: [
                     {
@@ -56,7 +57,8 @@ class Demo extends Component {
                     monthCount={monthCount}
                     weekStart={weekStart}
                     weekLabel={weekLabel}
-                    range={range}/>
+                    range={range}
+                    monthStart={monthStart}/>
             </div>
         )
     }
