@@ -75,6 +75,7 @@ class Demo extends Component {
 - `weekLabel`：字符串数组，设置周的显示格式，默认为 ['日', '一', '二', '三', '四', '五', '六']
 - `format`：字符串，设置日期的显示格式，默认为 `yyyy-MM-dd`
 - `events`：对象数组，设置日历事件显示，默认为空数组。对象的格式为 `{'date': [Date Object], 'name': [String Object]}`,eg： `[{'date': new Date(2016, 4, 1), 'name': '劳动节'}]`
+- `monthStart`：字符串，设置日历的默认显示方式，默认为 `top`。可选值为`['top', 'center', 'bottom']`, `top` 表示日历按照选中日期递增方式显示，`top` 表示日历按照选中日期两端延伸方式显示，`bottom` 表示日历按照选中日期递减方式显示，
 
 # Example
 效果图如下：    
