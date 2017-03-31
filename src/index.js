@@ -1,7 +1,7 @@
 import React, {Component, PropTypes} from 'react'
 import TopPanel from './TopPanel'
 import {checkType, dateFormat} from './utils'
-import './less/style.less'
+import '../less/style.less'
 import * as fastclick from 'fastclick'
 // element-closest | CC0-1.0 | github.com/jonathantneal/closest
 (function (ElementProto) {
@@ -64,22 +64,24 @@ import * as fastclick from 'fastclick'
 }())
 export default class PhCalendar extends Component {
     static propTypes = {
-        monthCount: PropTypes.number,
-        weekStart: PropTypes.number,
+        monthCount: PropTypes.number, // 3~12
+        weekStart: PropTypes.number, // 0~6
+        monthStart: PropTypes.string, // ['top', 'center', 'bottom']
         weekLabel: PropTypes.array,
-        range: PropTypes.bool, // 是否支持范围选择
-        disabled: PropTypes.array,// 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
+        range: PropTypes.bool,
+        disabled: PropTypes.array,
         values: PropTypes.array,
         format: PropTypes.string,
         events: React.PropTypes.arrayOf(PropTypes.shape({
             date: PropTypes.object,
             name: PropTypes.string
         })),
-        dateChose: PropTypes.func
+        dateChose: PropTypes.func,
     }
     static defaultProps = {
         format: 'yyyy-MM-dd',
-        monthCount: 6, // 渲染头部年月的前后一年的时间
+        monthCount: 6,
+        monthStart: 'top',
         weekStart: 1,
         weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
         range: true,
@@ -91,24 +93,21 @@ export default class PhCalendar extends Component {
     constructor(props, context) {
         super(props, context)
         const values = props.values
-        // 标记当前可视的为monthRange的第一个
         this.screen = window.screen
-        const monthRange = this.getMonthRange(this.getCenterDateByValues(values))
         this.state = {
             layer: false,
-            monthRange: monthRange, // 月份的列表
-            dateRange: values, // 选择日期的范围,如果是只有一个，则默认是单选了
+            monthRange: this.getMonthRange(this.getDateFromValues(values)),
+            dateRange: values,
             changeDate: false,
-            titleDate: monthRange[0]
+            titleDate: this.getDateFromValues(values, true)
         }
     }
     componentWillReceiveProps(nextPros) {
         const values = nextPros.values
-        const monthRange = this.getMonthRange(this.getCenterDateByValues(values))
         this.setState({
             dateRange: values,
-            titleDate: monthRange[0],
-            monthRange: monthRange
+            titleDate: this.getDateFromValues(values, true),
+            monthRange: this.getMonthRange(this.getDateFromValues(values))
         })
     }
     componentDidMount() {
@@ -121,6 +120,8 @@ export default class PhCalendar extends Component {
             this.initTitleDateAndScrollTop()
         })
     }
+    componentDidUpdate(){
+    }
     // event callback
     dataChoseCallback(){
         let {dateRange} = this.state
@@ -129,22 +130,44 @@ export default class PhCalendar extends Component {
         })
         this.props.dateChose(dateRange)
     }
-    initTitleDateAndScrollTop(){
+    initTitleDateAndScrollTop(date){
         const doms = []
-        const {monthRange} = this.state
+        const {monthRange, titleDate} = this.state
+        const topDate = checkType(date, 'date') ? date : titleDate
+        const dateStr = topDate.getFullYear()+'-'+topDate.getMonth()
+        let titleIndex = null
         Array.prototype.forEach.call(document.getElementsByClassName('ph-c-month'), (item, index)=>{
             const title = item.getElementsByClassName('ph-c-month-title')[0]
+            const offsetTitle = item.offsetTop + title.clientHeight
+            const offsetBottom = item.offsetTop + item.clientHeight
+            const date = monthRange[index]
+            const yearMonth = date.getFullYear()+'-'+date.getMonth()
+            if(yearMonth === dateStr && titleIndex === null){
+                titleIndex = index
+            }
             doms.push({
-                offsetTitle: item.offsetTop + title.clientHeight,
-                offsetBottom: item.offsetTop + item.clientHeight,
-                date: monthRange[index]
+                offsetTitle: offsetTitle,
+                offsetBottom: offsetBottom,
+                date: date
             })
         })
         this.monthDOMArr = doms
+        let scrollTop = 0
+        if(titleIndex !== null){
+            scrollTop = doms[titleIndex].offsetTitle - 70
+        }
+        setTimeout(()=>{
+            document.documentElement.scrollTop = document.body.scrollTop = scrollTop
+        },10)
     }
-    getCenterDateByValues(values){
-        if(values.length && checkType(values[0], 'date')){
-            return values[0]
+    getDateFromValues(values, force0){
+        let {monthStart} = this.props
+        let index = 0
+        if(monthStart === 'bottom' && !force0){
+            index = 1
+        }
+        if(values && values.length && checkType(values[index], 'date')){
+            return values[index]
         }
         return new Date()
     }
@@ -194,15 +217,30 @@ export default class PhCalendar extends Component {
     getMonthRange(date){
         let month = date.getMonth()
         const year = date.getFullYear()
-        let count = this.props.monthCount
+        let {monthCount, monthStart} = this.props
         // 最小为3，最大为12
-        if(count < 3 || count > 12){
-            count = 6
+        if(monthCount < 3 || monthCount > 12){
+            monthCount = 6
         }
-        const middle = Math.ceil(count/2)
+        if(['top', 'center', 'bottom'].indexOf(monthStart) === -1){
+            monthStart = 'top'
+        }
+        let start = 0
+        switch (monthStart) {
+            case 'top':
+                start = 0
+                break
+            case 'center':
+                start = 1-Math.ceil(monthCount/2)
+                break
+            case 'bottom':
+                start = 1-monthCount
+                break
+        }
         let arr = []
-        for(let i = 1 - middle; i < middle; i++){
-            arr.push(new Date(year, month+i))
+        for(let i = 0; i < monthCount; i++){
+            arr.push(new Date(year, month+start))
+            start++
         }
         return arr
     }
@@ -373,14 +411,13 @@ export default class PhCalendar extends Component {
             const monthDoms = this.monthDOMArr
             const titleDate = this.state.titleDate
             // body
-            const scrollTop = document.body.scrollTop
+            const scrollTop = document.body.scrollTop + 70
             const len = monthDoms.length
-            const currentIndex = (()=>{
+            const currentDate = (()=>{
                 for(let i=0; i<len; i++){
-                    if(scrollTop < monthDoms[i].offsetBottom) return i
+                    if(scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date
                 }
             })()
-            const currentDate = monthDoms[currentIndex].date
             if(titleDate.toLocaleString() != currentDate.toLocaleString()){
                 this.setState({
                     titleDate: currentDate
@@ -429,7 +466,7 @@ export default class PhCalendar extends Component {
             layer: false
         })
         requestAnimationFrame(()=>{
-            this.initTitleDateAndScrollTop()
+            this.initTitleDateAndScrollTop(date)
         })
     }
     render(){
@@ -452,7 +489,7 @@ export default class PhCalendar extends Component {
                             const year = monthItem.getFullYear()
                             const month = monthItem.getMonth()
                             return (<div key={monthIndex} className="ph-c-month"><div
-                                className="ph-c-month-title"><p>{dateFormat(monthItem, 'yyyy年MM月dd日')}</p></div><div
+                                className="ph-c-month-title"><p>{dateFormat(monthItem, 'yyyy年MM月')}</p></div><div
                                 className="ph-c-month-week-container">{this.renderDataToUlStyle(year, month)}</div></div>)
                         })
                     }

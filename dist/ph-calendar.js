@@ -155,11 +155,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _createClass(PhCalendar, null, [{
 	        key: 'propTypes',
 	        value: {
-	            monthCount: _react.PropTypes.number,
-	            weekStart: _react.PropTypes.number,
+	            monthCount: _react.PropTypes.number, // 3~12
+	            weekStart: _react.PropTypes.number, // 0~6
+	            monthStart: _react.PropTypes.string, // ['top', 'center', 'bottom']
 	            weekLabel: _react.PropTypes.array,
-	            range: _react.PropTypes.bool, // 是否支持范围选择
-	            disabled: _react.PropTypes.array, // 如果是恰好两个值，则表示是范围([null, date]表示什么时间之前，[date, null]表示什么时间之后，[date,date]表示区间)，一个或者多个则表示是单点禁用
+	            range: _react.PropTypes.bool,
+	            disabled: _react.PropTypes.array,
 	            values: _react.PropTypes.array,
 	            format: _react.PropTypes.string,
 	            events: _react2['default'].PropTypes.arrayOf(_react.PropTypes.shape({
@@ -173,7 +174,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key: 'defaultProps',
 	        value: {
 	            format: 'yyyy-MM-dd',
-	            monthCount: 6, // 渲染头部年月的前后一年的时间
+	            monthCount: 6,
+	            monthStart: 'top',
 	            weekStart: 1,
 	            weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
 	            range: true,
@@ -190,25 +192,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        _Component.call(this, props, context);
 	        var values = props.values;
-	        // 标记当前可视的为monthRange的第一个
 	        this.screen = window.screen;
-	        var monthRange = this.getMonthRange(this.getCenterDateByValues(values));
 	        this.state = {
 	            layer: false,
-	            monthRange: monthRange, // 月份的列表
-	            dateRange: values, // 选择日期的范围,如果是只有一个，则默认是单选了
+	            monthRange: this.getMonthRange(this.getDateFromValues(values)),
+	            dateRange: values,
 	            changeDate: false,
-	            titleDate: monthRange[0]
+	            titleDate: this.getDateFromValues(values, true)
 	        };
 	    }
 	
 	    PhCalendar.prototype.componentWillReceiveProps = function componentWillReceiveProps(nextPros) {
 	        var values = nextPros.values;
-	        var monthRange = this.getMonthRange(this.getCenterDateByValues(values));
 	        this.setState({
 	            dateRange: values,
-	            titleDate: monthRange[0],
-	            monthRange: monthRange
+	            titleDate: this.getDateFromValues(values, true),
+	            monthRange: this.getMonthRange(this.getDateFromValues(values))
 	        });
 	    };
 	
@@ -225,6 +224,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	    };
 	
+	    PhCalendar.prototype.componentDidUpdate = function componentDidUpdate() {};
+	
 	    // event callback
 	
 	    PhCalendar.prototype.dataChoseCallback = function dataChoseCallback() {
@@ -238,24 +239,49 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.props.dateChose(dateRange);
 	    };
 	
-	    PhCalendar.prototype.initTitleDateAndScrollTop = function initTitleDateAndScrollTop() {
+	    PhCalendar.prototype.initTitleDateAndScrollTop = function initTitleDateAndScrollTop(date) {
 	        var doms = [];
-	        var monthRange = this.state.monthRange;
+	        var _state = this.state;
+	        var monthRange = _state.monthRange;
+	        var titleDate = _state.titleDate;
 	
+	        var topDate = _utils.checkType(date, 'date') ? date : titleDate;
+	        var dateStr = topDate.getFullYear() + '-' + topDate.getMonth();
+	        var titleIndex = null;
 	        Array.prototype.forEach.call(document.getElementsByClassName('ph-c-month'), function (item, index) {
 	            var title = item.getElementsByClassName('ph-c-month-title')[0];
+	            var offsetTitle = item.offsetTop + title.clientHeight;
+	            var offsetBottom = item.offsetTop + item.clientHeight;
+	            var date = monthRange[index];
+	            var yearMonth = date.getFullYear() + '-' + date.getMonth();
+	            if (yearMonth === dateStr && titleIndex === null) {
+	                titleIndex = index;
+	            }
 	            doms.push({
-	                offsetTitle: item.offsetTop + title.clientHeight,
-	                offsetBottom: item.offsetTop + item.clientHeight,
-	                date: monthRange[index]
+	                offsetTitle: offsetTitle,
+	                offsetBottom: offsetBottom,
+	                date: date
 	            });
 	        });
 	        this.monthDOMArr = doms;
+	        var scrollTop = 0;
+	        if (titleIndex !== null) {
+	            scrollTop = doms[titleIndex].offsetTitle - 70;
+	        }
+	        setTimeout(function () {
+	            document.documentElement.scrollTop = document.body.scrollTop = scrollTop;
+	        }, 10);
 	    };
 	
-	    PhCalendar.prototype.getCenterDateByValues = function getCenterDateByValues(values) {
-	        if (values.length && _utils.checkType(values[0], 'date')) {
-	            return values[0];
+	    PhCalendar.prototype.getDateFromValues = function getDateFromValues(values, force0) {
+	        var monthStart = this.props.monthStart;
+	
+	        var index = 0;
+	        if (monthStart === 'bottom' && !force0) {
+	            index = 1;
+	        }
+	        if (values && values.length && _utils.checkType(values[index], 'date')) {
+	            return values[index];
 	        }
 	        return new Date();
 	    };
@@ -311,15 +337,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	    PhCalendar.prototype.getMonthRange = function getMonthRange(date) {
 	        var month = date.getMonth();
 	        var year = date.getFullYear();
-	        var count = this.props.monthCount;
+	        var _props = this.props;
+	        var monthCount = _props.monthCount;
+	        var monthStart = _props.monthStart;
+	
 	        // 最小为3，最大为12
-	        if (count < 3 || count > 12) {
-	            count = 6;
+	        if (monthCount < 3 || monthCount > 12) {
+	            monthCount = 6;
 	        }
-	        var middle = Math.ceil(count / 2);
+	        if (['top', 'center', 'bottom'].indexOf(monthStart) === -1) {
+	            monthStart = 'top';
+	        }
+	        var start = 0;
+	        switch (monthStart) {
+	            case 'top':
+	                start = 0;
+	                break;
+	            case 'center':
+	                start = 1 - Math.ceil(monthCount / 2);
+	                break;
+	            case 'bottom':
+	                start = 1 - monthCount;
+	                break;
+	        }
 	        var arr = [];
-	        for (var i = 1 - middle; i < middle; i++) {
-	            arr.push(new Date(year, month + i));
+	        for (var i = 0; i < monthCount; i++) {
+	            arr.push(new Date(year, month + start));
+	            start++;
 	        }
 	        return arr;
 	    };
@@ -375,9 +419,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	
 	    PhCalendar.prototype.renderMonth = function renderMonth(year, month) {
-	        var _props = this.props;
-	        var weekStart = _props.weekStart;
-	        var weekLabel = _props.weekLabel;
+	        var _props2 = this.props;
+	        var weekStart = _props2.weekStart;
+	        var weekLabel = _props2.weekLabel;
 	
 	        var weekLen = weekLabel.length;
 	        var firstDate = new Date(year, month, 1);
@@ -506,14 +550,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var monthDoms = _this4.monthDOMArr;
 	            var titleDate = _this4.state.titleDate;
 	            // body
-	            var scrollTop = document.body.scrollTop;
+	            var scrollTop = document.body.scrollTop + 70;
 	            var len = monthDoms.length;
-	            var currentIndex = (function () {
+	            var currentDate = (function () {
 	                for (var i = 0; i < len; i++) {
-	                    if (scrollTop < monthDoms[i].offsetBottom) return i;
+	                    if (scrollTop < monthDoms[i].offsetBottom) return monthDoms[i].date;
 	                }
 	            })();
-	            var currentDate = monthDoms[currentIndex].date;
 	            if (titleDate.toLocaleString() != currentDate.toLocaleString()) {
 	                _this4.setState({
 	                    titleDate: currentDate
@@ -600,20 +643,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            layer: false
 	        });
 	        requestAnimationFrame(function () {
-	            _this5.initTitleDateAndScrollTop();
+	            _this5.initTitleDateAndScrollTop(date);
 	        });
 	    };
 	
 	    PhCalendar.prototype.render = function render() {
 	        var _this6 = this;
 	
-	        var _props2 = this.props;
-	        var weekStart = _props2.weekStart;
-	        var weekLabel = _props2.weekLabel;
-	        var _state = this.state;
-	        var titleDate = _state.titleDate;
-	        var layer = _state.layer;
-	        var monthRange = _state.monthRange;
+	        var _props3 = this.props;
+	        var weekStart = _props3.weekStart;
+	        var weekLabel = _props3.weekLabel;
+	        var _state2 = this.state;
+	        var titleDate = _state2.titleDate;
+	        var layer = _state2.layer;
+	        var monthRange = _state2.monthRange;
 	
 	        return _react2['default'].createElement(
 	            'div',
@@ -650,7 +693,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            _react2['default'].createElement(
 	                                'p',
 	                                null,
-	                                _utils.dateFormat(monthItem, 'yyyy年MM月dd日')
+	                                _utils.dateFormat(monthItem, 'yyyy年MM月')
 	                            )
 	                        ),
 	                        _react2['default'].createElement(
@@ -1973,8 +2016,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!../../node_modules/css-loader/index.js!../../node_modules/less-loader/index.js!./style.less", function() {
-				var newContent = require("!!../../node_modules/css-loader/index.js!../../node_modules/less-loader/index.js!./style.less");
+			module.hot.accept("!!../node_modules/css-loader/index.js!../node_modules/less-loader/index.js!./style.less", function() {
+				var newContent = require("!!../node_modules/css-loader/index.js!../node_modules/less-loader/index.js!./style.less");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});

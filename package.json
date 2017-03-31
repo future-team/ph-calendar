@@ -1,6 +1,6 @@
 {
   "name": "ph-calendar",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "calendar component for phoenix-ui",
   "repository": {
     "type": "git",
