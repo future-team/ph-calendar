@@ -370,18 +370,18 @@ export default class PhCalendar extends Component {
             }
         }
         if(chooseEnd) {
-            if(dateTime < chooseEnd.getTime() && dateTime > chooseStart.getTime()){
-                return {
-                    type: 0,
-                    className: 'choose-between',
-                    text: ''
-                }
-            }
             if(dateStr === chooseEnd.toLocaleDateString()){
                 return {
                     type: 1,
                     className: 'choose-end',
                     text: '结束'
+                }
+            }
+            if(dateTime < chooseEnd.getTime() && dateTime > chooseStart.getTime()){
+                return {
+                    type: 0,
+                    className: 'choose-between',
+                    text: ''
                 }
             }
         }
