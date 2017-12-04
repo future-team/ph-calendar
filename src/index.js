@@ -70,6 +70,7 @@ export default class PhCalendar extends Component {
         weekLabel: PropTypes.array,
         range: PropTypes.bool,
         disabled: PropTypes.array,
+        available: PropTypes.array, 
         values: PropTypes.array,
         format: PropTypes.string,
         events: React.PropTypes.arrayOf(PropTypes.shape({
@@ -86,6 +87,7 @@ export default class PhCalendar extends Component {
         weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
         range: true,
         disabled: [],
+        available: [],
         values: [],
         events: [],
         dateChose: function(){}
@@ -206,6 +208,38 @@ export default class PhCalendar extends Component {
         }
         return result
     }
+    /**
+     * 检查可用的日期
+     * @param date
+     * @return {boolean}
+     */
+    checkAvailableDate(date) {
+        const available = this.props.available
+        const len = available.length
+        const dateTime =  date.getTime()
+        let result = true
+        if(len == 0){
+            return true
+        }
+        if(len == 2){// 区间
+            const start = available[0]
+            const end = available[1]
+            if(start == null){
+                return dateTime <= end.getTime()
+            }
+            if(end == null){
+                return dateTime >= start.getTime()
+            }
+            return dateTime <= end.getTime() && dateTime >= start.getTime()
+        }
+        if(len == 1 || len > 2){
+            const dateStr = date.toLocaleDateString()
+            available.map((item)=>{
+                if(item.toLocaleDateString() == dateStr) result = true
+            })
+        }
+        return result
+    }
     checkEvent(date) {
         let name = ''
         const dateString = date.toLocaleDateString()
@@ -256,7 +290,7 @@ export default class PhCalendar extends Component {
         const {range} = this.props
         let dateR = this.state.dateRange
         const date = data.date
-        if(['pre', 'next'].indexOf(data.type) != -1 || this.checkDisableDate(date)){
+        if(['pre', 'next'].indexOf(data.type) != -1 || this.checkDisableDate(date) || !this.checkAvailableDate(date)){
             return null
         }
         if(!range){
@@ -328,7 +362,7 @@ export default class PhCalendar extends Component {
             // get style
             item.status = this.getDayStyle(item)
             // check disabled
-            item.disabled = this.checkDisableDate(date)
+            item.disabled = (this.checkDisableDate(date) || !this.checkAvailableDate(date))
             daysArr.push(item)
             i++
             dateItem.setDate(dateItem.getDate()+1)
