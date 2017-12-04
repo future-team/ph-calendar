@@ -198,7 +198,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            monthRange: this.getMonthRange(this.getDateFromValues(values)),
 	            dateRange: values,
 	            changeDate: false,
-	            titleDate: this.getDateFromValues(values, true)
+	            titleDate: this.getDateFromValues(values, true),
+	            _onScoll: this.onScrollHandler.bind(this)
 	        };
 	    }
 	
@@ -214,14 +215,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    PhCalendar.prototype.componentDidMount = function componentDidMount() {
 	        var _this = this;
 	
-	        document.addEventListener('scroll', function () {
-	            _this.onScrollHandler();
-	        }, false);
+	        document.addEventListener('scroll', this.state._onScoll, false);
 	        // remove click delay
 	        fastclick.attach(document.body);
 	        requestAnimationFrame(function () {
 	            _this.initTitleDateAndScrollTop();
 	        });
+	    };
+	
+	    PhCalendar.prototype.componentWillUnmount = function componentWillUnmount() {
+	        document.removeEventListener('scroll', this.state._onScoll);
 	    };
 	
 	    PhCalendar.prototype.componentDidUpdate = function componentDidUpdate() {};

@@ -91,6 +91,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        _Component.call(this, props, context);
 	        this.state = {
+	            show: false,
 	            values: [new Date(2017, 1, 24), new Date(2017, 2, 25)],
 	            disabled: [new Date(2017, 2, 14), new Date(2017, 2, 17), new Date(2017, 2, 3)], // start end 包括
 	            weekStart: 1,
@@ -128,6 +129,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        console.log('选择后的日期', data);
 	    };
 	
+	    Demo.prototype.toggleShow = function toggleShow() {
+	        this.setState({
+	            show: !this.state.show
+	        });
+	    };
+	
 	    Demo.prototype.render = function render() {
 	        var _state = this.state;
 	        var values = _state.values;
@@ -138,11 +145,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var range = _state.range;
 	        var monthCount = _state.monthCount;
 	        var monthStart = _state.monthStart;
+	        var show = _state.show;
 	
 	        return _react2['default'].createElement(
 	            'div',
 	            { className: 'rcs-demo' },
-	            _react2['default'].createElement(_srcIndexJs2['default'], { values: values,
+	            _react2['default'].createElement(
+	                'div',
+	                { onClick: this.toggleShow.bind(this), style: { position: 'fixed', width: '100%', zIndex: 10000 } },
+	                '想看到我么？'
+	            ),
+	            show ? _react2['default'].createElement(_srcIndexJs2['default'], { values: values,
 	                dateChose: this.chooseCallback,
 	                disabled: disabled,
 	                events: events,
@@ -151,7 +164,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	                weekLabel: weekLabel,
 	                range: range,
 	                monthStart: monthStart
-	            })
+	            }) : _react2['default'].createElement(
+	                'div',
+	                null,
+	                '嘿嘿嘿，我不见了'
+	            ),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null),
+	            _react2['default'].createElement('br', null)
 	        );
 	    };
 	
@@ -19986,7 +20039,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            monthRange: this.getMonthRange(this.getDateFromValues(values)),
 	            dateRange: values,
 	            changeDate: false,
-	            titleDate: this.getDateFromValues(values, true)
+	            titleDate: this.getDateFromValues(values, true),
+	            _onScoll: this.onScrollHandler.bind(this)
 	        };
 	    }
 	
@@ -20002,14 +20056,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    PhCalendar.prototype.componentDidMount = function componentDidMount() {
 	        var _this = this;
 	
-	        document.addEventListener('scroll', function () {
-	            _this.onScrollHandler();
-	        }, false);
+	        document.addEventListener('scroll', this.state._onScoll, false);
 	        // remove click delay
 	        fastclick.attach(document.body);
 	        requestAnimationFrame(function () {
 	            _this.initTitleDateAndScrollTop();
 	        });
+	    };
+	
+	    PhCalendar.prototype.componentWillUnmount = function componentWillUnmount() {
+	        document.removeEventListener('scroll', this.state._onScoll);
 	    };
 	
 	    PhCalendar.prototype.componentDidUpdate = function componentDidUpdate() {};
