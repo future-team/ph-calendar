@@ -96,6 +96,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            disabled: [new Date(2017, 2, 14), new Date(2017, 2, 17), new Date(2017, 2, 3)], // start end 包括
 	            weekStart: 1,
 	            monthCount: 3,
+	            available: [new Date(2017, 1, 24), new Date(2017, 2, 25)],
 	            range: true,
 	            monthStart: 'top', //['top', 'center', 'bottom']
 	            //weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -146,6 +147,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var monthCount = _state.monthCount;
 	        var monthStart = _state.monthStart;
 	        var show = _state.show;
+	        var available = _state.available;
 	
 	        return _react2['default'].createElement(
 	            'div',
@@ -159,6 +161,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                dateChose: this.chooseCallback,
 	                disabled: disabled,
 	                events: events,
+	                available: available,
 	                monthCount: monthCount,
 	                weekStart: weekStart,
 	                weekLabel: weekLabel,
@@ -20002,6 +20005,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            weekLabel: _react.PropTypes.array,
 	            range: _react.PropTypes.bool,
 	            disabled: _react.PropTypes.array,
+	            available: _react.PropTypes.array,
 	            values: _react.PropTypes.array,
 	            format: _react.PropTypes.string,
 	            events: _react2['default'].PropTypes.arrayOf(_react.PropTypes.shape({
@@ -20021,6 +20025,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
 	            range: true,
 	            disabled: [],
+	            available: [],
 	            values: [],
 	            events: [],
 	            dateChose: function dateChose() {}
@@ -20167,6 +20172,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return result;
 	    };
 	
+	    /**
+	     * 检查可用的日期
+	     * @param date
+	     * @return {boolean}
+	     */
+	
+	    PhCalendar.prototype.checkAvailableDate = function checkAvailableDate(date) {
+	        var available = this.props.available;
+	        var len = available.length;
+	        var dateTime = date.getTime();
+	        var result = true;
+	        if (len == 0) {
+	            return true;
+	        }
+	        if (len == 2) {
+	            // 区间
+	            var start = available[0];
+	            var end = available[1];
+	            if (start == null) {
+	                return dateTime <= end.getTime();
+	            }
+	            if (end == null) {
+	                return dateTime >= start.getTime();
+	            }
+	            return dateTime <= end.getTime() && dateTime >= start.getTime();
+	        }
+	        if (len == 1 || len > 2) {
+	            (function () {
+	                var dateStr = date.toLocaleDateString();
+	                available.map(function (item) {
+	                    if (item.toLocaleDateString() == dateStr) result = true;
+	                });
+	            })();
+	        }
+	        return result;
+	    };
+	
 	    PhCalendar.prototype.checkEvent = function checkEvent(date) {
 	        var name = '';
 	        var dateString = date.toLocaleDateString();
@@ -20225,7 +20267,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var dateR = this.state.dateRange;
 	        var date = data.date;
-	        if (['pre', 'next'].indexOf(data.type) != -1 || this.checkDisableDate(date)) {
+	        if (['pre', 'next'].indexOf(data.type) != -1 || this.checkDisableDate(date) || !this.checkAvailableDate(date)) {
 	            return null;
 	        }
 	        if (!range) {
@@ -20303,7 +20345,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // get style
 	            item.status = this.getDayStyle(item);
 	            // check disabled
-	            item.disabled = this.checkDisableDate(date);
+	            item.disabled = this.checkDisableDate(date) || !this.checkAvailableDate(date);
 	            daysArr.push(item);
 	            i++;
 	            dateItem.setDate(dateItem.getDate() + 1);

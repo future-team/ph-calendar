@@ -161,6 +161,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            weekLabel: _react.PropTypes.array,
 	            range: _react.PropTypes.bool,
 	            disabled: _react.PropTypes.array,
+	            available: _react.PropTypes.array,
 	            values: _react.PropTypes.array,
 	            format: _react.PropTypes.string,
 	            events: _react2['default'].PropTypes.arrayOf(_react.PropTypes.shape({
@@ -180,6 +181,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            weekLabel: ['日', '一', '二', '三', '四', '五', '六'],
 	            range: true,
 	            disabled: [],
+	            available: [],
 	            values: [],
 	            events: [],
 	            dateChose: function dateChose() {}
@@ -326,6 +328,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return result;
 	    };
 	
+	    /**
+	     * 检查可用的日期
+	     * @param date
+	     * @return {boolean}
+	     */
+	
+	    PhCalendar.prototype.checkAvailableDate = function checkAvailableDate(date) {
+	        var available = this.props.available;
+	        var len = available.length;
+	        var dateTime = date.getTime();
+	        var result = true;
+	        if (len == 0) {
+	            return true;
+	        }
+	        if (len == 2) {
+	            // 区间
+	            var start = available[0];
+	            var end = available[1];
+	            if (start == null) {
+	                return dateTime <= end.getTime();
+	            }
+	            if (end == null) {
+	                return dateTime >= start.getTime();
+	            }
+	            return dateTime <= end.getTime() && dateTime >= start.getTime();
+	        }
+	        if (len == 1 || len > 2) {
+	            (function () {
+	                var dateStr = date.toLocaleDateString();
+	                available.map(function (item) {
+	                    if (item.toLocaleDateString() == dateStr) result = true;
+	                });
+	            })();
+	        }
+	        return result;
+	    };
+	
 	    PhCalendar.prototype.checkEvent = function checkEvent(date) {
 	        var name = '';
 	        var dateString = date.toLocaleDateString();
@@ -384,7 +423,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var dateR = this.state.dateRange;
 	        var date = data.date;
-	        if (['pre', 'next'].indexOf(data.type) != -1 || this.checkDisableDate(date)) {
+	        if (['pre', 'next'].indexOf(data.type) != -1 || this.checkDisableDate(date) || !this.checkAvailableDate(date)) {
 	            return null;
 	        }
 	        if (!range) {
@@ -462,7 +501,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // get style
 	            item.status = this.getDayStyle(item);
 	            // check disabled
-	            item.disabled = this.checkDisableDate(date);
+	            item.disabled = this.checkDisableDate(date) || !this.checkAvailableDate(date);
 	            daysArr.push(item);
 	            i++;
 	            dateItem.setDate(dateItem.getDate() + 1);

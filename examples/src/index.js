@@ -12,6 +12,7 @@ class Demo extends Component {
             disabled: [new Date(2017, 2, 14), new Date(2017, 2, 17), new Date(2017, 2, 3)],// start end 包括
             weekStart: 1,
             monthCount: 3,
+            available: [new Date(2017, 1, 24), new Date(2017, 2, 25)],
             range: true,
             monthStart: 'top', //['top', 'center', 'bottom']
             //weekLabel: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -48,7 +49,7 @@ class Demo extends Component {
         })
     }
     render() {
-        const {values, disabled, weekStart, events, weekLabel, range, monthCount, monthStart, show} = this.state
+        const {values, disabled, weekStart, events, weekLabel, range, monthCount, monthStart, show, available} = this.state
         return (
             <div className="rcs-demo">
                 <div onClick={this.toggleShow.bind(this)} style={{position:'fixed', width: '100%', zIndex: 10000}}>想看到我么？</div>
@@ -57,6 +58,7 @@ class Demo extends Component {
                     dateChose={this.chooseCallback}
                     disabled={disabled}
                     events={events}
+                    available={available}
                     monthCount={monthCount}
                     weekStart={weekStart}
                     weekLabel={weekLabel}
