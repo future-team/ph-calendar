@@ -7,6 +7,7 @@ class Demo extends Component {
     constructor(props, context) {
         super(props, context)
         this.state = {
+            show: false,
             values: [new Date(2017, 1, 24), new Date(2017, 2, 25)],
             disabled: [new Date(2017, 2, 14), new Date(2017, 2, 17), new Date(2017, 2, 3)],// start end 包括
             weekStart: 1,
@@ -41,11 +42,18 @@ class Demo extends Component {
     chooseCallback(data){
         console.log('选择后的日期', data)
     }
+    toggleShow() {
+        this.setState({
+            show: !this.state.show
+        })
+    }
     render() {
-        const {values, disabled, weekStart, events, weekLabel, range, monthCount, monthStart} = this.state
+        const {values, disabled, weekStart, events, weekLabel, range, monthCount, monthStart, show} = this.state
         return (
             <div className="rcs-demo">
-                <PhCalendar values={values}
+                <div onClick={this.toggleShow.bind(this)} style={{position:'fixed', width: '100%', zIndex: 10000}}>想看到我么？</div>
+                {
+                    show ? <PhCalendar values={values}
                     dateChose={this.chooseCallback}
                     disabled={disabled}
                     events={events}
@@ -54,7 +62,9 @@ class Demo extends Component {
                     weekLabel={weekLabel}
                     range={range}
                     monthStart={monthStart}
-                />
+                />: <div>嘿嘿嘿，我不见了</div>
+                }
+                <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
             </div>
         )
     }

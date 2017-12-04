@@ -99,7 +99,8 @@ export default class PhCalendar extends Component {
             monthRange: this.getMonthRange(this.getDateFromValues(values)),
             dateRange: values,
             changeDate: false,
-            titleDate: this.getDateFromValues(values, true)
+            titleDate: this.getDateFromValues(values, true),
+            _onScoll: this.onScrollHandler.bind(this)
         }
     }
     componentWillReceiveProps(nextPros) {
@@ -111,14 +112,15 @@ export default class PhCalendar extends Component {
         })
     }
     componentDidMount() {
-        document.addEventListener('scroll', ()=>{
-            this.onScrollHandler()
-        }, false)
+        document.addEventListener('scroll', this.state._onScoll, false)
         // remove click delay
         fastclick.attach(document.body)
         requestAnimationFrame(()=>{
             this.initTitleDateAndScrollTop()
         })
+    }
+    componentWillUnmount() {
+        document.removeEventListener('scroll', this.state._onScoll)
     }
     componentDidUpdate(){
     }
